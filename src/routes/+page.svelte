@@ -1,2 +1,6 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<script>
+    import IpfsCounter from "$lib/components/IpfsCounter.svelte";"../lib/components/IpfsCounter.svelte"
+</script>
+
+1. Create a Simple Counter with Helia (IPFS)
+<IpfsCounter/>

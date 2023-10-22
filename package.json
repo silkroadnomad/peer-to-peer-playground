@@ -29,5 +29,10 @@
 		"vite": "^4.4.2",
 		"vitest": "^0.32.2"
 	},
-	"type": "module"
+	"type": "module",
+	"dependencies": {
+		"@helia/json": "^1.0.3",
+		"@orbitdb/core": "github:orbitdb/orbitdb#helia",
+		"helia": "^2.0.3"
+	}
 }
