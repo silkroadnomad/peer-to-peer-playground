@@ -3,4 +3,5 @@
 </script>
 
 1. Create a Simple Counter with Helia (IPFS)
+
 <IpfsCounter/>
