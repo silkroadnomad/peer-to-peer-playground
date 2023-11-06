@@ -16,7 +16,7 @@
     /**
      * As the button component mounts we spin up an IFPS-node
      * inside the browser which is by default connecting
-     * the the public ipfs network via WebRTC.
+     * the the public helia network via WebRTC.
      * then we load the last count our Helia (IPFS) node.
      */
     onMount(async () => {
@@ -32,10 +32,11 @@
         cid = await j.add(++count);
     };
 </script>
-
-<button on:click={increment}>
-    IPFS-Counter: {count}
-</button>
+{#if j}
+    <button on:click={increment}>
+        IPFS-Counter: {count}
+    </button>
+{/if}
 
 {#if cid}
     <div>
@@ -48,5 +49,6 @@
     button {
         background: yellowgreen;
         color: black;
+        margin: 2rem;
     }
 </style>
