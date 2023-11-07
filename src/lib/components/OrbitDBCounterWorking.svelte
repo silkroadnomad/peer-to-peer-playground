@@ -2,7 +2,6 @@
     import { createHelia } from 'helia';
     import {
         createOrbitDB,
-        IPFSAccessController,
         KeyValue,
         KeyStore,
         Identities,
@@ -12,15 +11,10 @@
     import { identifyService } from 'libp2p/identify';
     import { autoNATService } from 'libp2p/autonat';
     import { gossipsub } from '@chainsafe/libp2p-gossipsub';
-    // import { KeyStore, Identities } from '../../src/index.js'
-    import testKeysPath from '../../fixtures/test-keys-path.js'
-    // import createHelia from '../utils/create-helia.js'
     /** helia IPFS node instance (could be held in a Svelte store) */
     let helia;
     let orbitdb;
     let db,dbReopened;
-    let address2Reopen;
-    let keystore
     let accessController
     let identities
     let testIdentity1

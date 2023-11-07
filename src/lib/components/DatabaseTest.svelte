@@ -1,14 +1,9 @@
 <script>
     import { createHelia } from "helia"
     import {
-        Database, Entry,
-        createOrbitDB,
-        KeyValue,
+        Database,
         KeyStore,
         Identities,
-        OrbitDBAccessController,
-        parseAddress,
-        isValidAddress
     } from '@orbitdb/core'
     // import { MemoryBlockstore } from 'blockstore-core'
     // import { MemoryDatastore } from 'datastore-core'

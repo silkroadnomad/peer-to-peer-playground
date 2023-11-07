@@ -39,11 +39,17 @@
 		"@helia/ipns": "^2.0.1",
 		"@helia/json": "^1.0.3",
 		"@helia/unixfs": "^1.4.2",
+		"@libp2p/peer-id": "^3.0.5",
+		"@libp2p/peer-record": "^6.0.8",
 		"@libp2p/pubsub-peer-discovery": "^9.0.2",
+		"@libp2p/webrtc": "^3.2.8",
+		"@multiformats/multiaddr": "^12.1.9",
+		"@multiformats/multiaddr-matcher": "^1.1.0",
 		"@orbitdb/core": "github:orbitdb/orbitdb#helia",
 		"blockstore-level": "^1.1.4",
 		"datastore-core": "^9.2.3",
 		"datastore-level": "^10.1.4",
-		"helia": "^2.0.3"
+		"helia": "^2.0.3",
+		"libp2p": "^0.46.18"
 	}
 }

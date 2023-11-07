@@ -38,7 +38,7 @@
                 <HeaderPanelDivider>LibP2P</HeaderPanelDivider>
                 <HeaderPanelLink on:click={()=>goto('/libp2p')}>pub sub example</HeaderPanelLink>
                 <HeaderPanelDivider>Helia</HeaderPanelDivider>
-                <HeaderPanelLink on:click={()=>goto('/ipfs')}>IPFS</HeaderPanelLink>
+                <HeaderPanelLink on:click={()=>goto('/helia')}>IPFS-Counter</HeaderPanelLink>
                 <HeaderPanelDivider>OrbitDB</HeaderPanelDivider>
                 <HeaderPanelLink on:click={()=>goto('/orbitdb')}>orbit-db examples</HeaderPanelLink>
             </HeaderPanelLinks>
@@ -58,25 +58,7 @@
 <!--        </SideNavMenu>-->
 <!--    </SideNavItems>-->
 <!--</SideNav>-->
-
-<Content>
-    <Grid>
-        <Row>
-            <Column>
-                    <h1>LibP2P, Helia & OrbitDB examples with Svelte</h1>
-<!--                <h1>HeaderSwitcher</h1>-->
-                <p>
-<!--                    Start a Helia node and watch the amount its connecting in the dropdown box.-->
-                </p>
-                <TileGroup legend="examples">
-                    <Tile on:click={() => goto("/libp2p")}>LibP2P Examples</Tile>
-                    <Tile on:click={() => goto("/helia")}>Helia Examples</Tile>
-                    <Tile on:click={() => goto("/orbitdb")}>OrbitDB Examples</Tile>
-
-                </TileGroup>
-            </Column>
-        </Row>
-    </Grid>
-</Content>
-
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 <slot/>
