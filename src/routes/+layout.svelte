@@ -38,7 +38,8 @@
                 <HeaderPanelDivider>LibP2P</HeaderPanelDivider>
                 <HeaderPanelLink on:click={()=>goto('/libp2p')}>pub sub example</HeaderPanelLink>
                 <HeaderPanelDivider>Helia</HeaderPanelDivider>
-                <HeaderPanelLink on:click={()=>goto('/helia')}>IPFS-Counter</HeaderPanelLink>
+                <HeaderPanelLink on:click={()=>goto('/helia/counter')}>counter with MemoryBlockstore</HeaderPanelLink>
+                <HeaderPanelLink on:click={()=>goto('/helia/counter2')}>counter with LevelBlockstore</HeaderPanelLink>
                 <HeaderPanelDivider>OrbitDB</HeaderPanelDivider>
                 <HeaderPanelLink on:click={()=>goto('/orbitdb')}>orbit-db examples</HeaderPanelLink>
             </HeaderPanelLinks>

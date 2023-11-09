@@ -2,8 +2,9 @@
     import { createLibp2p } from 'libp2p'
     import { gossipsub } from '@chainsafe/libp2p-gossipsub'
     import { noise } from '@chainsafe/libp2p-noise'
+    import { mplex } from '@libp2p/mplex'
     import { yamux } from '@chainsafe/libp2p-yamux'
-    import { webRTC } from '@libp2p/webrtc'
+    import {webRTC, webRTCDirect} from '@libp2p/webrtc'
     import { webSockets } from '@libp2p/websockets'
     import * as filters from '@libp2p/websockets/filters'
     import { multiaddr } from '@multiformats/multiaddr'
@@ -12,7 +13,12 @@
     import { fromString, toString } from 'uint8arrays'
     import {onMount} from "svelte";
     import {Column, Grid, Row, Button, TextInput, Select, SelectItem, TextArea} from "carbon-components-svelte";
-
+    import {webTransport} from "@libp2p/webtransport";
+    import {bootstrap} from "@libp2p/bootstrap";
+    import {pubsubPeerDiscovery} from "@libp2p/pubsub-peer-discovery";
+    import {autoNATService} from "libp2p/autonat";
+    import { clickToCopy } from "$lib/utils/click2Copy.js"
+    import {pubsub} from "@helia/ipns/routing";
     let libp2p
     let peerId
     let dialMultiaddr = localStorage.getItem("dialMultiaddr") || ''
@@ -33,14 +39,25 @@
         output = output+= `${line} \n`
     }
     const clean = (line) => line.replaceAll('\n', '')
-
+    ///ip4/65.21.180.203/tcp/9091/wss/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t
     onMount(async ()=>{
+        const address = "/dns4/ipfs.le-space.de/tcp/9091/wss/p2p-webrtc-star'"
+        const multiaddrs = [ //add your own WebRTC Stars Servers here too!
+            // '/dnsaddr/ipfs.le-space.de/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t',
+            // '/ip4/65.21.180.203/tcp/4003/p2p-circuit/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t'
+            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
+            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
+            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
+            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
+        ];
+        const bootstrapConfig = { list: multiaddrs };
         libp2p = await createLibp2p({
             addresses: {
+                // swarm: [address],
                 listen: [
                     // create listeners for incoming WebRTC connection attempts on all
                     // available Circuit Relay connections
-                    '/webrtc'
+                    "/webrtc", "/wss", "/ws",
                 ]
             },
             transports: [
@@ -51,6 +68,26 @@
                 }),
                 // support dialing/listening on WebRTC addresses
                 webRTC(),
+                    //{
+                    // rtcConfiguration: {
+                    //     iceServers: [
+                    //         {
+                    //             urls: [
+                    //                 'stun:stun.l.google.com:19302',
+                    //                 'stun:global.stun.twilio.com:3478',
+                    //                 // 'STUN:freestun.net:3479',
+                    //             ],
+                    //         },
+                    //         // {
+                    //         //     credential: 'free',
+                    //         //     username: 'free',
+                    //         //     urls: ['TURN:freestun.net:3479', 'TURNS:freestun.net:5350'],
+                    //         // },
+                    //     ],
+                    // },
+                //}),
+                // webRTCDirect(),
+                // webTransport(),
                 // support dialing/listening on Circuit Relay addresses
                 circuitRelayTransport({
                     // make a reservation on any discovered relays - this will let other
@@ -61,7 +98,10 @@
             // a connection encrypter is necessary to dial the relay
             connectionEncryption: [noise()],
             // a stream muxer is necessary to dial the relay
-            streamMuxers: [yamux()],
+            streamMuxers: [
+                yamux(),
+                mplex()
+            ],
             connectionGater: {
                 denyDialMultiaddr: () => {
                     // by default we refuse to dial local addresses from the browser since they
@@ -71,13 +111,20 @@
                     return false
                 }
             },
+            peerDiscovery: [
+                bootstrap(bootstrapConfig),
+                pubsubPeerDiscovery()
+            ],
             services: {
                 identify: identifyService(),
-                pubsub: gossipsub()
-            },
-            connectionManager: {
-                minConnections: 0
+                autoNAT: autoNATService(),
+                pubsub: gossipsub({ allowPublishToZeroPeers: true })
+                //pubsub: gossipsub({allowPublishToZeroPeers: true, emitSelf: false, canRelayMessage: true}),
+                // pubsub: gossipsub({allowPublishToZeroPeers: true, emitSelf: true, canRelayMessage: true}),
             }
+            // connectionManager: {
+            //     minConnections: 0
+            // }
         })
         peerId = libp2p.peerId.toString()
         // update peer connections
@@ -93,15 +140,19 @@
         /** update topic peers */
         setInterval(() => {
             // console.log("checking subscribers for topic",subscribeTopic)
-            const peerList = libp2p.services.pubsub.getSubscribers(subscribeTopic).map(peerId => peerId.toString())
-            console.log("found topicPeerList",peerList)
-            topicPeerList = peerList;
+            if(libp2p){
+                const peerList = libp2p.services.pubsub.getSubscribers(subscribeTopic).map(peerId => peerId.toString())
+                // console.log("found topicPeerList",peerList)
+                topicPeerList = peerList;
+            }
+
         }, 1500)
 
         libp2p.services.pubsub.addEventListener('message', event => {
             const topic = event.detail.topic
+            // console.log("event.detail",event.detail)
             const message = toString(event.detail.data)
-
+            if(topic==='_peer-discovery._p2p._pubsub') return
             appendOutput(`Message received on topic '${topic}'`)
             appendOutput(message)
         })
@@ -112,7 +163,6 @@
             console.log(" libp2p.getMultiaddrs()", libp2p.getMultiaddrs())
             const multiaddrs = libp2p.getMultiaddrs().map((ma) => ma.toString())
             listeningAddressList = multiaddrs;
-
         })
 
     })
@@ -147,7 +197,12 @@
         appendOutput(`Sending message '${clean(sendTopicMessage)}'`)
         await libp2p.services.pubsub.publish(subscribeTopic, fromString(sendTopicMessage))
     }
+
+    let text = ''
 </script>
+<svelte:window on:copysuccess={(it) => {
+    console.log("it",it)
+    text="Success"}} on:copyerror={() => {text="Error while copying"}} />
 <Grid fullWidth>
     <Row>
         <Column>
@@ -181,16 +236,24 @@
         <Column>
 
         <TextInput labelText="PeerId" value={peerId} readonly id="dial-multiaddr-input"  placeholder="/ip4/127.0.0.1/tcp/1234/ws/p2p/123Foo" />
-            <Select labelText="Listening Addresses">
-            {#each listeningAddressList as a}
-                <SelectItem value={a} />
-            {/each}
-            </Select>
-            <Select labelText="Connected Peers">
-                {#each peerConnectionsList as c}
-                    <SelectItem value={c} />
+            <Select on:change={
+                (evt) =>  text=evt.target.options[evt.target.selectedIndex].value}
+                id="listeningAddressList"
+                labelText="Listening Addresses" >
+                <SelectItem value={"choose"} />
+                {#each listeningAddressList as a}
+                    <SelectItem value={a} />
                 {/each}
-            </Select>
+        </Select>
+
+        <div>
+            {#if text!=='Success' && listeningAddressList.length>0}click2copy open in new browser{/if}
+            <div use:clickToCopy>{text}</div></div>
+        <Select id="connectedPeers" labelText="Connected Peers">
+            {#each peerConnectionsList as c}
+                <SelectItem value={c} />
+            {/each}
+        </Select>
         </Column>
     </Row>
 <Row>
