@@ -3,7 +3,7 @@
     import {Column, Grid, Row,Select, SelectItem, TextInput} from "carbon-components-svelte";
 
     let ipfsConfusion = localStorage.getItem("ipfsConfusion") || "if you change this value, you can make sure this counter was never being saved inside IPFS"
-    let levelStore = localStorage.getItem("levelStore") || 0
+    let levelStore = localStorage.getItem("levelStore") || "0"
 
     $:console.log("levelStore",levelStore)
 </script>
@@ -11,9 +11,10 @@
 <Grid>
     <Row>
         <Column>
-            <h2>Blockstore Helia Counter</h2>
-            <p>It stores and loads a counter value into a Helia node running inside the browser using a memorystore.
-                The last CID is stored in localStorage</p>
+            <h2>Levelstore Helia Counter</h2>
+            <p>It stores and loads a counter value into a Helia node running inside the browser using a level store.
+                Meaning the value of the counter is stored in leveldb inside the browser.
+                The last CID of the counter is also stored in localStorage</p>
         </Column>
         <Column>
             <TextInput bind:value={ipfsConfusion} labelText="IPFS Confusion" placeholder={ipfsConfusion}/>
