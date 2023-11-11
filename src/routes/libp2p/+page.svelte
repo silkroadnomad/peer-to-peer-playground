@@ -44,13 +44,14 @@
         const address = "/dns4/ipfs.le-space.de/tcp/9091/wss/p2p-webrtc-star'"
         const multiaddrs = [ //add your own WebRTC Stars Servers here too!
             // '/dnsaddr/ipfs.le-space.de/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t',
-            // '/ip4/65.21.180.203/tcp/4003/p2p-circuit/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t'
-            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
-            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
-            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
-            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
+//            '/ip4/65.21.180.203/tcp/4003/p2p-circuit/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t'
+            '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
+            '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
+            '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
+            '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
         ];
         const bootstrapConfig = { list: multiaddrs };
+        // const bootstrapConfig = { list: multiaddrs };
         libp2p = await createLibp2p({
             addresses: {
                 // swarm: [address],
@@ -87,7 +88,7 @@
                     // },
                 //}),
                 // webRTCDirect(),
-                // webTransport(),
+                webTransport(),
                 // support dialing/listening on Circuit Relay addresses
                 circuitRelayTransport({
                     // make a reservation on any discovered relays - this will let other
@@ -139,7 +140,7 @@
 
         /** update topic peers */
         setInterval(() => {
-            // console.log("checking subscribers for topic",subscribeTopic)
+            console.log("checking subscribers for topic",subscribeTopic)
             if(libp2p){
                 const peerList = libp2p.services.pubsub.getSubscribers(subscribeTopic).map(peerId => peerId.toString())
                 // console.log("found topicPeerList",peerList)
@@ -152,7 +153,7 @@
             const topic = event.detail.topic
             // console.log("event.detail",event.detail)
             const message = toString(event.detail.data)
-            if(topic==='_peer-discovery._p2p._pubsub') return
+            // if(topic==='_peer-discovery._p2p._pubsub') return
             appendOutput(`Message received on topic '${topic}'`)
             appendOutput(message)
         })

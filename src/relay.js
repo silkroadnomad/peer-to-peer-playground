@@ -11,7 +11,7 @@ import { identifyService } from 'libp2p/identify'
 
 const server = await createLibp2p({
     addresses: {
-        listen: ['/ip4/127.0.0.1/tcp/12312/ws']
+        listen: ['/ip4/127.0.0.1/tcp/12313/ws']
     },
     transports: [
         webSockets({
