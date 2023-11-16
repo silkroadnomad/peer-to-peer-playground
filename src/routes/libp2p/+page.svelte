@@ -228,7 +228,13 @@
                 <li>Send messages between the windows using the "PubSub" section</li>
             </ol>
 
-            Remark: For some reason this doesn't work with a kubo - only with a local relay. With Kubo you first must connect both to the Kubo address and then one can dial the others address and start pubsub!
+            Remark:
+            <ol>
+                <li>for some reason this doesn't work with a Kubo - only with a local relay. With Kubo you must first both connect to the Kubo address and then one can dial the others address and start pubsub! </li>
+                <li>
+                    If you now open your mobile browser and do the same you will notice - it doesn't work. I need "normal" WebRTC to connect here!? Or could a webrtc-direct between to browsers without relay work too?
+                </li>
+            </ol>
         </Column>
     </Row>
     <Row>
