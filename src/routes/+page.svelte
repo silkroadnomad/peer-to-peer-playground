@@ -11,7 +11,6 @@ import {
     Column, TileGroup, Tile,
 } from "carbon-components-svelte";
 
-import {goto} from "$app/navigation";
 </script>
 
 <Content>
@@ -19,16 +18,15 @@ import {goto} from "$app/navigation";
         <Row>
             <Column>
                 <h1>LibP2P, Helia & OrbitDB examples with Svelte</h1>
-                <!--                <h1>HeaderSwitcher</h1>-->
                 <p>
-                    <!--                    Start a Helia node and watch the amount its connecting in the dropdown box.-->
+                    Here you can find Svelte p2p-examples. Please use the menu in the top right corner.
                 </p>
-                <TileGroup legend="examples">
+                <!-- <TileGroup legend="examples">
                     <Tile on:click={() => goto("/libp2p")}>LibP2P Examples</Tile>
                     <Tile on:click={() => goto("/helia")}>Helia Examples</Tile>
                     <Tile on:click={() => goto("/orbitdb")}>OrbitDB Examples</Tile>
 
-                </TileGroup>
+                </TileGroup> -->
             </Column>
         </Row>
     </Grid>

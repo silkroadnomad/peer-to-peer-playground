@@ -41,14 +41,16 @@
     const clean = (line) => line.replaceAll('\n', '')
     ///ip4/65.21.180.203/tcp/9091/wss/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t
     onMount(async ()=>{
-        const address = "/dns4/ipfs.le-space.de/tcp/9091/wss/p2p-webrtc-star'"
+        // const address = "/dns4/ipfs.le-space.de/tcp/9091/wss/p2p-webrtc-star'"
         const multiaddrs = [ //add your own WebRTC Stars Servers here too!
+            "/ip4/127.0.0.1/udp/4001/quic-v1/webtransport/certhash/uEiB8WKzyyA6fkDtE5JjEG-ZV4t4Y2vhLh8-G1kUhroZRuA/certhash/uEiAfJRn5MZPIJea_8SzaRF-BcpIjoXBPBIQr4TdOHzNnFA/p2p/12D3KooWJMzFdrzM7peD4het8s8gcRmQq1Jx4VzyM4eMnKQjbA4L"
+            // '/ip4/65.21.180.203/udp/4004/webrtc-direct/certhash/uEiB4P97Mk0CSYGSSgX5JnMRM6PKRq9NckCB3XRJUqiflsw/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t',
             // '/dnsaddr/ipfs.le-space.de/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t',
 //            '/ip4/65.21.180.203/tcp/4003/p2p-circuit/p2p/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t'
-            '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
-            '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
-            '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
-            '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
+//             '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
+//             '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
+//             '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
+//             '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
         ];
         const bootstrapConfig = { list: multiaddrs };
         // const bootstrapConfig = { list: multiaddrs };
@@ -56,19 +58,16 @@
             addresses: {
                 // swarm: [address],
                 listen: [
-                    // create listeners for incoming WebRTC connection attempts on all
-                    // available Circuit Relay connections
                     "/webrtc", "/wss", "/ws",
                 ]
             },
             transports: [
                 // the WebSocket transport lets us dial a local relay
                 webSockets({
-                    // this allows non-secure WebSocket connections for purposes of the demo
-                    filter: filters.all
+                    filter: filters.all                     // this allows non-secure WebSocket connections for purposes of the demo
                 }),
-                // support dialing/listening on WebRTC addresses
                 webRTC(),
+                webRTCDirect(),
                     //{
                     // rtcConfiguration: {
                     //     iceServers: [
@@ -137,10 +136,14 @@
             console.log("connection:close",evt)
             updatePeerList()
         })
+        libp2p.addEventListener("peer:discovery", (evt) => {
+            console.log("peer:discovery",evt.detail.id.toString())
+
+        });
 
         /** update topic peers */
         setInterval(() => {
-            console.log("checking subscribers for topic",subscribeTopic)
+            // console.log("checking subscribers for topic",subscribeTopic)
             if(libp2p){
                 const peerList = libp2p.services.pubsub.getSubscribers(subscribeTopic).map(peerId => peerId.toString())
                 // console.log("found topicPeerList",peerList)

@@ -7,7 +7,7 @@
     import {Column, Grid, Row, Button, TextInput, Select, SelectItem, TextArea} from "carbon-components-svelte";
     import {webSockets} from "@libp2p/websockets";
     import * as filters from "@libp2p/websockets/filters";
-    import {webRTC} from "@libp2p/webrtc";
+    import {webRTC, webRTCDirect} from "@libp2p/webrtc";
     import {webTransport} from "@libp2p/webtransport";
     import {circuitRelayTransport} from "libp2p/circuit-relay";
     import {noise} from "@chainsafe/libp2p-noise";
@@ -17,6 +17,11 @@
     import {pubsubPeerDiscovery} from "@libp2p/pubsub-peer-discovery";
     import {identifyService} from "libp2p/identify";
     import {autoNATService} from "libp2p/autonat";
+    import { dcutrService } from 'libp2p/dcutr'
+    import { kadDHT } from '@libp2p/kad-dht'
+    import { ipnsSelector } from 'ipns/selector'
+    import { ipnsValidator } from 'ipns/validator'
+
     import {gossipsub} from "@chainsafe/libp2p-gossipsub";
 
     const encoder = new TextEncoder()
@@ -26,13 +31,18 @@
     let endpointUrl = "https://api.pinata.cloud/psa"
     let accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI4OThhZmZjOC1iNmMwLTQxNjItYjk2Zi1mOWIyMzcyMmY3N2MiLCJlbWFpbCI6Im5pY29AbGUtc3BhY2UuZGUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJpZCI6Ik5ZQzEiLCJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MX1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlfSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiMWNlNjkyOWE4ODM4OWQ5NTdiNGIiLCJzY29wZWRLZXlTZWNyZXQiOiI5MzM1ODYwY2YzYjNhYTA3NmQyMWIyMGZhYjYwNDdjYjU4M2IwZmExOTY4MTAwMTAwM2JhYTc3ZTk5MjNmNDI0IiwiaWF0IjoxNjU0NTkwODMwfQ.dEWmr-AztXzVumARNe20kZ4cpn9uz0ycZESzvlcMrRk"
     let origins = []
-
+    let remotes = []
+    /**
+     * See issue: https://github.com/ipfs-examples/helia-examples/pull/147
+     */
     onMount(async() => {
         const multiaddrs = [ //add your own WebRTC Stars Servers here too!
-            '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
-            '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
-            '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
-            '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
+             '/ip4/65.21.180.203/udp/4001/webrtc-direct/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t'
+            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
+            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
+            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
+            // '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt',
+            // '/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ'
         ];
         const bootstrapConfig = { list: multiaddrs };
         helia = await createHelia({
@@ -52,6 +62,7 @@
                 }),
                 // support dialing/listening on WebRTC addresses
                 webRTC(),
+                webRTCDirect(),
                 //{
                 // rtcConfiguration: {
                 //     iceServers: [
@@ -100,11 +111,25 @@
                 pubsubPeerDiscovery()
             ],
             services: {
+                // @ts-expect-error - types are borked...
+                dcutr: dcutrService(),
                 identify: identifyService(),
                 autoNAT: autoNATService(),
-                pubsub: gossipsub({ allowPublishToZeroPeers: true })
-                //pubsub: gossipsub({allowPublishToZeroPeers: true, emitSelf: false, canRelayMessage: true}),
-                // pubsub: gossipsub({allowPublishToZeroPeers: true, emitSelf: true, canRelayMessage: true}),
+                // pubsub: gossipsub(),
+                pubsub: gossipsub({ allowPublishToZeroPeers: true }),
+                // dht: kadDHT(),
+                dht: kadDHT({
+                    // pingTimeout: 2000,
+                    // pingConcurrency: 3,
+                    // kBucketSize: 20,
+                    clientMode: true,
+                    validators: {
+                        ipns: ipnsValidator
+                    },
+                    selectors: {
+                        ipns: ipnsSelector
+                    }
+                })
             }
             // connectionManager: {
             //     minConnections: 0
@@ -115,11 +140,22 @@
             console.log("peer:discovery",evt.detail.id.toString())
             origins = helia.libp2p.getMultiaddrs()
         });
+        /** update listening addresses */
+        helia.libp2p.addEventListener('self:peer:update', (evt) => {
+            console.log("self:peer:update",evt)
+            console.log(" libp2p.getMultiaddrs()", helia.libp2p.getMultiaddrs())
+            const multiaddrs = helia.libp2p.getMultiaddrs().map((ma) => ma.toString())
+            remotes = multiaddrs
+        })
         helia.libp2p.addEventListener('connection:open', (evt) => {
             const conn = evt.detail
 
             if (conn.direction === 'inbound') {
                 console.log("inbound connection", conn)
+            }
+            if (conn.direction === 'outbound') {
+                console.log("outbound connection", conn)
+                // remotes.push(conn.remoteAddr)
             }
             else console.log("other connection", conn)
         })
@@ -147,6 +183,7 @@
     }
 
     $:console.log("origins",origins)
+    $:console.log("remotes",remotes)
 </script>
 
 <Grid>
@@ -160,6 +197,7 @@
                 <li>1. It should use https://github.com/ipfs/helia-remote-pinning (https://www.npmjs.com/package/@helia/remote-pinning)</li>
                 <li>2. Copy code from tests https://github.com/ipfs/helia-remote-pinning/blob/main/test/index.spec.ts into this file</li>
                 <li>3. Since this is a browser example this might not work as of https://github.com/ipfs-examples/helia-examples/pull/147</li>
+                <li>4. When finished: working here: https://github.com/ipfs/helia-remote-pinning/blob/main/test/index.spec.ts</li>
             </ol>
         </Column>
     </Row>
