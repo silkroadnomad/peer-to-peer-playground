@@ -112,7 +112,7 @@
                 }
             },
             peerDiscovery: [
-                bootstrap(bootstrapConfig),
+                // bootstrap(bootstrapConfig),
                 pubsubPeerDiscovery()
             ],
             services: {
@@ -215,20 +215,20 @@
         </Column>
         <Column>
             <ol>
-                <li>Start a relay using the command line:
-                    <pre>$ node ./relay.js
-                        Relay listening on multiaddr(s):  [
-                            '{dialMultiaddr}'
-                        ]
+                <li>
+                    <pre>
+                        /ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiD9nbBhAXN4rQqw8lNZF2ltpicsXzBSYrBaQ4SJu5JkOg/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM
                     </pre>
                 </li>
-                <li>Copy the relay's multiaddr and use the "Dial Multaddr" section to dial the relay</li>
+                <li>Copy the relay's multiaddr above and use the "Dial Multiaddr" section to dial the relay</li>
                 <li>Wait for a WebRTC address to appear in the "Listening Addresses" area</li>
                 <li>Open the same page in another browser window</li>
                 <li>Use the "Dial Multiaddr" section in the second window to dial the WebRTC address from the first</li>
                 <li>Subscribe both windows to the same topic using the "PubSub" section</li>
                 <li>Send messages between the windows using the "PubSub" section</li>
             </ol>
+
+            Remark: For some reason this doesn't work with a kubo - only with a local relay. With Kubo you first must connect both to the Kubo address and then one can dial the others address and start pubsub!
         </Column>
     </Row>
     <Row>
