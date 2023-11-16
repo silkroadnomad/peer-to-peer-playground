@@ -1,5 +1,5 @@
 <script>
-    import { Configuration, RemotePinningServiceClient, Status } from '@ipfs-shipyard/pinning-service-client'
+/*    import { Configuration, RemotePinningServiceClient, Status } from '@ipfs-shipyard/pinning-service-client'
     import { createHelia } from 'helia'
     import { json } from '@helia/json';
     import { createRemotePinner } from '@helia/remote-pinning'
@@ -32,11 +32,13 @@
     let accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI4OThhZmZjOC1iNmMwLTQxNjItYjk2Zi1mOWIyMzcyMmY3N2MiLCJlbWFpbCI6Im5pY29AbGUtc3BhY2UuZGUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJpZCI6Ik5ZQzEiLCJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MX1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlfSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiMWNlNjkyOWE4ODM4OWQ5NTdiNGIiLCJzY29wZWRLZXlTZWNyZXQiOiI5MzM1ODYwY2YzYjNhYTA3NmQyMWIyMGZhYjYwNDdjYjU4M2IwZmExOTY4MTAwMTAwM2JhYTc3ZTk5MjNmNDI0IiwiaWF0IjoxNjU0NTkwODMwfQ.dEWmr-AztXzVumARNe20kZ4cpn9uz0ycZESzvlcMrRk"
     let origins = []
     let remotes = []
+    */
+
     /**
      * See issue: https://github.com/ipfs-examples/helia-examples/pull/147
      */
-    onMount(async() => {
-        const multiaddrs = [ //add your own WebRTC Stars Servers here too!
+    /** onMount(async() => {
+       const multiaddrs = [ //add your own WebRTC Stars Servers here too!
              '/ip4/65.21.180.203/udp/4001/webrtc-direct/12D3KooWALjeG5hYT9qtBtqpv1X3Z4HVgjDrBamHfo37Jd61uW1t'
             // '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
             // '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
@@ -140,7 +142,7 @@
             console.log("peer:discovery",evt.detail.id.toString())
             origins = helia.libp2p.getMultiaddrs()
         });
-        /** update listening addresses */
+        /!** update listening addresses *!/
         helia.libp2p.addEventListener('self:peer:update', (evt) => {
             console.log("self:peer:update",evt)
             console.log(" libp2p.getMultiaddrs()", helia.libp2p.getMultiaddrs())
@@ -167,67 +169,67 @@
 
         remotePinningClient = new RemotePinningServiceClient(pinServiceConfig)
         remotePinner = createRemotePinner(helia, remotePinningClient)
-    })
+    }) */
 
     /**
      * addPin
      */
-    const addPin = async () => {
-        // const cid = await helia.addBytes(encoder.encode('hello world'))
-        const cid = await j.add({greet:'hello world'})
-        addPinResult = await remotePinner.addPin({
-            cid,
-            origins: origins,
-            name: 'pinned-great-01'
-        })
-    }
+    // const addPin = async () => {
+    //     // const cid = await helia.addBytes(encoder.encode('hello world'))
+    //     const cid = await j.add({greet:'hello world'})
+    //     addPinResult = await remotePinner.addPin({
+    //         cid,
+    //         origins: origins,
+    //         name: 'pinned-great-01'
+    //     })
+    // }
 
-    $:console.log("origins",origins)
-    $:console.log("remotes",remotes)
+    // $:console.log("origins",origins)
+    // $:console.log("remotes",remotes)
 </script>
 
-<Grid>
-    <Row>
-        <Column>
-            <h2>Remote Pinning</h2>
-            <p>
-                This example should demonstrate remote pinning (e.g. via https://www.pinata.cloud/) in the browser.
-            </p>
-            <ol>
-                <li>1. It should use https://github.com/ipfs/helia-remote-pinning (https://www.npmjs.com/package/@helia/remote-pinning)</li>
-                <li>2. Copy code from tests https://github.com/ipfs/helia-remote-pinning/blob/main/test/index.spec.ts into this file</li>
-                <li>3. Since this is a browser example this might not work as of https://github.com/ipfs-examples/helia-examples/pull/147</li>
-                <li>4. When finished: working here: https://github.com/ipfs/helia-remote-pinning/blob/main/test/index.spec.ts</li>
-            </ol>
-        </Column>
-    </Row>
-    <Row class="distance-please">
-        <Column>
-            <TextInput bind:value={endpointUrl} labelText="pinningServer api endpointUrl" placeholder="e.g. https://api.pinata.cloud/psa"/>
-        </Column>
-    </Row>
-    <Row class="distance-please">
-        <Column>
-            <TextInput bind:value={accessToken} labelText="IPFS Confusion" placeholder="add your pinata GWT here"/>
-        </Column>
-    </Row>
-    <Row class="distance-please">
-        <Column>
-            {#if origins.length>0}
-                <Button on:click={addPin}>Add Pin</Button>
-                <h3>PinResult: {addPinResult?.status}</h3>
-            {:else}
-                looking for my multi address - otherwise I can't pin.
-            {/if}
-        </Column>
-    </Row>
+<!--<Grid>-->
+<!--    <Row>-->
+<!--        <Column>-->
+<!--            <h2>Remote Pinning</h2>-->
+<!--            <p>-->
+<!--                This example should demonstrate remote pinning (e.g. via https://www.pinata.cloud/) in the browser.-->
+<!--            </p>-->
+<!--            <ol>-->
+<!--                <li>1. It should use https://github.com/ipfs/helia-remote-pinning (https://www.npmjs.com/package/@helia/remote-pinning)</li>-->
+<!--                <li>2. Copy code from tests https://github.com/ipfs/helia-remote-pinning/blob/main/test/index.spec.ts into this file</li>-->
+<!--                <li>3. Since this is a browser example this might not work as of https://github.com/ipfs-examples/helia-examples/pull/147</li>-->
+<!--                <li>4. When finished: working here: https://github.com/ipfs/helia-remote-pinning/blob/main/test/index.spec.ts</li>-->
+<!--            </ol>-->
+<!--        </Column>-->
+<!--    </Row>-->
+<!--    <Row class="distance-please">-->
+<!--        <Column>-->
+<!--            <TextInput bind:value={endpointUrl} labelText="pinningServer api endpointUrl" placeholder="e.g. https://api.pinata.cloud/psa"/>-->
+<!--        </Column>-->
+<!--    </Row>-->
+<!--    <Row class="distance-please">-->
+<!--        <Column>-->
+<!--            <TextInput bind:value={accessToken} labelText="IPFS Confusion" placeholder="add your pinata GWT here"/>-->
+<!--        </Column>-->
+<!--    </Row>-->
+<!--    <Row class="distance-please">-->
+<!--        <Column>-->
+<!--            {#if origins.length>0}-->
+<!--                <Button on:click={addPin}>Add Pin</Button>-->
+<!--                <h3>PinResult: {addPinResult?.status}</h3>-->
+<!--            {:else}-->
+<!--                looking for my multi address - otherwise I can't pin.-->
+<!--            {/if}-->
+<!--        </Column>-->
+<!--    </Row>-->
 
-</Grid>
+<!--</Grid>-->
 
 <style>
-    :global(.distance-please) { margin: 2rem}
-    h2,p,ol {
-        margin: 2rem;
-    }
+    /*:global(.distance-please) { margin: 2rem}*/
+    /*h2,p,ol {*/
+    /*    margin: 2rem;*/
+    /*}*/
 </style>
 

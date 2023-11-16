@@ -40,7 +40,7 @@
                 <HeaderPanelDivider>Helia</HeaderPanelDivider>
                 <HeaderPanelLink on:click={()=>goto('/helia/counter')}>counter with MemoryBlockstore</HeaderPanelLink>
                 <HeaderPanelLink on:click={()=>goto('/helia/counter2')}>counter with LevelBlockstore</HeaderPanelLink>
-                <HeaderPanelLink on:click={()=>goto('/helia/remotePinning')}>helia remote pinning</HeaderPanelLink>
+<!--                <HeaderPanelLink on:click={()=>goto('/helia/remotePinning')}>helia remote pinning</HeaderPanelLink>-->
                 <HeaderPanelDivider>OrbitDB</HeaderPanelDivider>
                 <HeaderPanelLink on:click={()=>goto('/orbitdb')}>orbit-db examples</HeaderPanelLink>
             </HeaderPanelLinks>

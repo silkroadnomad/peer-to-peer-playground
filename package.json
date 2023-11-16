@@ -39,7 +39,6 @@
 		"@chainsafe/libp2p-yamux": "^5.0.0",
 		"@helia/ipns": "^2.0.3",
 		"@helia/json": "^1.0.3",
-		"@helia/remote-pinning": "^1.1.1",
 		"@helia/unixfs": "^1.4.2",
 		"@ipfs-shipyard/pinning-service-client": "^1.0.3",
 		"@libp2p/peer-id": "^3.0.6",
