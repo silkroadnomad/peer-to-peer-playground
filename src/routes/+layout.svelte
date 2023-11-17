@@ -17,6 +17,7 @@
     import LibP2PPubSubExample from './libp2p/+page.svelte'
     import HeliaCounter from './helia/counter/+page.svelte'
     import HeliaCounter2 from './helia/counter2/+page.svelte'
+    import OrbitParticles from './orbitdb/+page.svelte'
 
     let isSideNavOpen = false;
     let isOpen = false;
@@ -26,7 +27,7 @@
         '/libp2p/pubsub': LibP2PPubSubExample,
         '/helia/counter': HeliaCounter,
         '/helia/counter2': HeliaCounter2,
-        '/orbitdb': LibP2PPubSubExample
+        '/orbitdb': OrbitParticles
     }
     $: view = routes[$hash]
 </script>

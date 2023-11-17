@@ -11,14 +11,16 @@
     import { circuitRelayTransport } from 'libp2p/circuit-relay'
     import { identifyService } from 'libp2p/identify'
     import { fromString, toString } from 'uint8arrays'
-    import {onMount} from "svelte";
-    import {Column, Grid, Row, Button, TextInput, Select, SelectItem, TextArea} from "carbon-components-svelte";
+    import { onMount } from "svelte";
+    import { Column, Grid, Row, Button, TextInput, Select, SelectItem, TextArea} from "carbon-components-svelte";
+    import QRCodeModal from '../../lib/components/QRCodeModal.svelte'
+    // import { qrCodeOpen } from "../../stores.js";
     import {webTransport} from "@libp2p/webtransport";
-    import {bootstrap} from "@libp2p/bootstrap";
     import {pubsubPeerDiscovery} from "@libp2p/pubsub-peer-discovery";
     import {autoNATService} from "libp2p/autonat";
     import { clickToCopy } from "$lib/utils/click2Copy.js"
     import {pubsub} from "@helia/ipns/routing";
+    import {bootstrap} from "@libp2p/bootstrap";
     let libp2p
     let peerId
     let dialMultiaddr = localStorage.getItem("dialMultiaddr") || ''
@@ -202,11 +204,14 @@
         await libp2p.services.pubsub.publish(subscribeTopic, fromString(sendTopicMessage))
     }
 
+    let qrCodeOpen;
+    // let qrCodeComponent;
     let text = ''
+    let selectedListeningAddress
+    let qrCodeData
+    $:qrCodeData = `${window.location.href}'?dial=${encodeURI(selectedListeningAddress)}`
+    //$:qrCodeData = encodeURI(selectedListeningAddress)
 </script>
-<svelte:window on:copysuccess={(it) => {
-    console.log("it",it)
-    text="Success"}} on:copyerror={() => {text="Error while copying"}} />
 <Grid fullWidth>
     <Row>
         <Column>
@@ -216,9 +221,10 @@
         <Column>
             <ol>
                 <li>
-                    <pre>
-                        /ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiD9nbBhAXN4rQqw8lNZF2ltpicsXzBSYrBaQ4SJu5JkOg/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM
-                    </pre>
+                    <div use:clickToCopy>/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiD9nbBhAXN4rQqw8lNZF2ltpicsXzBSYrBaQ4SJu5JkOg/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM</div>
+                    <br/>
+                    <div use:clickToCopy>/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM</div>
+                <br/>
                 </li>
                 <li>Copy the relay's multiaddr above and use the "Dial Multiaddr" section to dial the relay</li>
                 <li>Wait for a WebRTC address to appear in the "Listening Addresses" area</li>
@@ -235,35 +241,40 @@
                     If you now open your mobile browser and do the same you will notice - it doesn't work. I need "normal" WebRTC to connect here!? Or could a webrtc-direct between to browsers without relay work too?
                 </li>
             </ol>
+
         </Column>
+    </Row>
+    <Row>
+        <Column> <QRCodeModal bind:qrCodeOpen={qrCodeOpen} on:close={qrCodeOpen=false} qrCodeData={qrCodeData} /></Column>
     </Row>
     <Row>
         <Column>
             <h2>Node</h2>
             <TextInput labelText="Dial MultiAddr" bind:value={dialMultiaddr} id="dial-multiaddr-input"  placeholder="/ip4/127.0.0.1/tcp/1234/ws/p2p/123Foo" />
-            <Button on:click={dialMultiaddrButton} id="dial-multiaddr-button">Connect</Button>
+            <Button on:click={dialMultiaddrButton} id="dial-multiaddr-button">Dial / Connect</Button>
         </Column>
         <Column>
 
         <TextInput labelText="PeerId" value={peerId} readonly id="dial-multiaddr-input"  placeholder="/ip4/127.0.0.1/tcp/1234/ws/p2p/123Foo" />
-            <Select on:change={
-                (evt) =>  text=evt.target.options[evt.target.selectedIndex].value}
+        <Select on:change={ (evt) =>  {
+         selectedListeningAddress = evt.target.options[evt.target.selectedIndex].value
+         console.log("selectedListeningAddress",selectedListeningAddress)
+        }}
                 id="listeningAddressList"
-                labelText="Listening Addresses" >
+                abelText="Listening Addresses" >
                 <SelectItem value={"choose"} />
                 {#each listeningAddressList as a}
                     <SelectItem value={a} />
                 {/each}
         </Select>
 
-        <div>
-            {#if text!=='Success' && listeningAddressList.length>0}click2copy open in new browser{/if}
-            <div use:clickToCopy>{text}</div></div>
-        <Select id="connectedPeers" labelText="Connected Peers">
-            {#each peerConnectionsList as c}
-                <SelectItem value={c} />
-            {/each}
-        </Select>
+            <Button disabled={listeningAddressList.length==0 || !selectedListeningAddress}
+                    on:click={() => { qrCodeOpen=(!qrCodeOpen) }}>Open / Scan</Button>
+                <Select id="connectedPeers" labelText="Connected Peers">
+                    {#each peerConnectionsList as c}
+                        <SelectItem value={c} />
+                    {/each}
+                </Select>
         </Column>
     </Row>
 <Row>
