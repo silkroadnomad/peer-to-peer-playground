@@ -48,6 +48,7 @@
 		"@multiformats/multiaddr": "^12.1.10",
 		"@multiformats/multiaddr-matcher": "^1.1.0",
 		"blockstore-level": "^1.1.4",
+		"carbon-icons-svelte": "^12.4.0",
 		"datastore-core": "^9.2.3",
 		"datastore-level": "^10.1.4",
 		"helia": "^2.1.0",

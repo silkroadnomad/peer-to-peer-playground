@@ -71,6 +71,7 @@
             output=newOutput
         }
     }
+
     const clean = (line) => line.replaceAll('\n', '')
     onMount(async ()=>{
         libp2p = await createLibp2p(config)

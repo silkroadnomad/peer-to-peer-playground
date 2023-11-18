@@ -9,6 +9,8 @@
         SkipToContent,
         Theme,
     } from "carbon-components-svelte";
+
+    import LogoGithub from "carbon-icons-svelte/lib/LogoGithub.svelte";
     import "carbon-components-svelte/css/all.css";
     import { expoIn } from "svelte/easing";
     import { hash,query } from './router.js'
@@ -18,6 +20,7 @@
     import HeliaCounter from './helia/counter/+page.svelte'
     import HeliaCounter2 from './helia/counter2/+page.svelte'
     import OrbitParticles from './orbitdb/+page.svelte'
+    import {goto} from "$app/navigation";
 
     let isSideNavOpen = false;
     let isOpen = false;
@@ -35,6 +38,9 @@
 </script>
 <Theme bind:theme={theme}/>
 <Header company="Le Space" platformName="Peer-To-Peer Playground " bind:isSideNavOpen href={ `/#` }>
+    <div on:click={()=>goto('https://github.com/silkroadnomad/peer-to-peer-playground')}>
+        <LogoGithub  />
+    </div>
     <svelte:fragment slot="skip-to-content">
         <SkipToContent />
     </svelte:fragment>
