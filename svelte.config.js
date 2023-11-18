@@ -10,6 +10,7 @@ const config = {
 		adapter: adapter({
 			// default options are shown. On some platforms
 			// these options are set automatically — see below
+			out: 'public',
 			pages: 'build',
 			assets: 'build',
 			fallback: 'index.html',
