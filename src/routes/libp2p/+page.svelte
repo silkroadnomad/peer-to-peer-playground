@@ -33,6 +33,8 @@
     let qrCodeOpen;
     let selectedListeningAddress
 
+    let filterOutput
+
     let qrCodeData
     $:qrCodeData = `${window.location.origin}/${window.location.hash}?dial=${encodeURI(selectedListeningAddress)}`
 
@@ -49,13 +51,25 @@
             dialMultiaddr=dialMultiaddrItems[dialMultiaddrItems.length-1].id //preselect the last added
         }
     }
+
     /** store last dialedMultiAddress in localStorage */
     $: localStorage.setItem("dialMultiaddr",dialMultiaddr)
     $: localStorage.setItem("subscribeTopic",subscribeTopic)
 
     const appendOutput = (line) => {
-        if(!line)return
-        output = output+= `${line} \n`
+        if(!line) return
+        if(!filterOutput) output = output+= `${line} \n`
+        if(filterOutput){
+            console.log("filtering output with filter ",filterOutput)
+            let newOutput = ''
+            let lines = output.split('\n')
+            for (const lineKey in lines){
+                 const thisLine = lines[lineKey]
+                if(thisLine.indexOf(filterOutput)!==-1)
+                    newOutput = thisLine+"\n"
+            }
+            output=newOutput
+        }
     }
     const clean = (line) => line.replaceAll('\n', '')
     onMount(async ()=>{
@@ -84,8 +98,8 @@
             const topic = event.detail.topic
             const message = toString(event.detail.data)
             // if(topic==='_peer-discovery._p2p._pubsub') return
-            appendOutput(`Message received on topic '${topic}'`)
-            appendOutput(message)
+            appendOutput(`Message received on topic '${topic}': ${message}`)
+           // appendOutput(message)
         })
 
         libp2p.addEventListener('self:peer:update', (evt) => {
@@ -221,6 +235,8 @@
         <Button on:click={sendTopicMessageButton} id="send-topic-message-button" disabled={sendTopicMessageButtonDisabled}>Send</Button>
     </Column>
         <Column>
+            <TextInput labelText="Filter Output" bind:value={filterOutput} type="text" placeholder="topic 'xyz'"   />
+
             <TextArea labelText="Output" value={output}/>
         </Column>
     </Row>
