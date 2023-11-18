@@ -1,17 +1,22 @@
-# Le Space - Examples of Peer-To-Peer between browsers
+# Le Space - Peer-To-Peer Playground
 
-since there are a lot of questions all the time and projects are developing either too fast or too slow,
-this is should be a collection of Svelte components which work with LibP2P, Helia and OrbitDB (IPFS).
+since there are a lot of questions and projects are developing either too fast or too slow,
+this is should be a collection of Svelte components which work with peer-to-peer libs such as
+- libp2p (https://libp2p.io/)
+- Helia (js-ipfs)  (https://helia.io/)
 
-All the code examples here don't use any server. Everything can be and should be hosted on IPFS only. 
+wer are planning to put:
+- OrbitDB (orbitdb) (https://github.com/orbitdb/orbitdb)
+- Canvas (https://www.canvas.xyz/)
+- Fission (https://fission.codes/)
+- Nostr (https://nostr.com/)
+- Waku (https://waku.org/)
+
+All the code examples here don't use any server. Everything can be and will be hosted on IPFS only. (right now its hosted on vercel for simplicity ;)
 (description on how to do this in Svelte follows )
 
 1. Create a simple counter with Helia (IPFS)
-
-# Todo 
-- simple libp2p example
-- description on how to build and deploy a svelte project on IPFS 
-- ms
+2. libp2p example (connection tester for webrtc, webtransport and pubsub between browsers) 
 
 # Resources 
 ## storage helia 

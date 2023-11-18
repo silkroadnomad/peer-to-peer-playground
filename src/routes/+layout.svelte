@@ -11,7 +11,7 @@
     } from "carbon-components-svelte";
     import "carbon-components-svelte/css/all.css";
     import { expoIn } from "svelte/easing";
-    import { hash } from './router.js'
+    import { hash,query } from './router.js'
     import Home from './+page.svelte'
 
     import LibP2PPubSubExample from './libp2p/+page.svelte'
@@ -30,6 +30,8 @@
         '/orbitdb': OrbitParticles
     }
     $: view = routes[$hash]
+    // $:console.log("query",$query)
+    // $:console.log("hash",$hash)
 </script>
 <Theme bind:theme={theme}/>
 <Header company="Le Space" platformName="Peer-To-Peer Playground " bind:isSideNavOpen href={ `/#` }>

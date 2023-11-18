@@ -1,4 +1,3 @@
-<svelte:options accessors/>
 <script>
     import {Modal} from "carbon-components-svelte";
     import QRCode from "qrcode-generator";
@@ -35,7 +34,6 @@
     function copySuccess(){
         text = "Copied!"
     }
-
     function copyError(event){
         text = `Error! ${event.detail}`
     }
