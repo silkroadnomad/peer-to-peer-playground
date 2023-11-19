@@ -14,7 +14,7 @@
         Select,
         SelectItem,
         TextArea,
-        ComboBox
+        ComboBox, Checkbox
     } from "carbon-components-svelte";
     import QRCodeModal from '../../lib/components/QRCodeModal.svelte'
     import { query } from '../router.js'
@@ -59,18 +59,19 @@
 
     const appendOutput = (line) => {
         if(!line) return
-        if(!filterOutput) output = output+= `${line} \n`
-        if(filterOutput){
-            console.log("filtering output with filter ",filterOutput)
-            let newOutput = ''
-            let lines = output.split('\n')
-            for (const lineKey in lines){
-                 const thisLine = lines[lineKey]
-                if(thisLine.indexOf(filterOutput)!==-1)
-                    newOutput = thisLine+"\n"
-            }
-            output=newOutput
-        }
+        // if(!filterOutput)
+            output = output+= `${line} \n`
+        // if(filterOutput){
+        //     console.log("filtering output with filter ",filterOutput)
+        //     let newOutput = ''
+        //     let lines = output.split('\n')
+        //     for (const lineKey in lines){
+        //          const thisLine = lines[lineKey]
+        //         if(thisLine.indexOf(filterOutput)!==-1)
+        //             newOutput = thisLine+"\n"
+        //     }
+        //     output=newOutput
+        // }
     }
 
     const clean = (line) => line.replaceAll('\n', '')
@@ -99,9 +100,11 @@
         libp2p.services.pubsub.addEventListener('message', event => {
             const topic = event.detail.topic
             const message = toString(event.detail.data)
-            // if(topic==='_peer-discovery._p2p._pubsub') return
-            appendOutput(`Message received on topic '${topic}': ${message}`)
-           // appendOutput(message)
+
+            if(!filterOutput)
+                appendOutput(`Message received on topic '${topic}': ${message}`)
+            else if (topic!=='_peer-discovery._p2p._pubsub')
+                appendOutput(`Message received on topic '${topic}': ${message}`)
         })
 
         libp2p.addEventListener('self:peer:update', (evt) => {
@@ -146,7 +149,7 @@
     <Row>
         <Column>
             <h1>libp2p PubSub browser example</h1>
-            <p>This example demonstrates the pubsub API running in a browser (please use a Chrome related browser)</p>
+            <p>This example demonstrates the pubsub API running in a browser (webtransport doesn't work in Firefox yet, use WebRTC-direct here)</p>
         </Column>
         <Column>
             <ol>
@@ -156,11 +159,11 @@
 <!--                    <div use:clickToCopy>/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM</div>-->
                 <br/>
                 </li>
-                <li>Choose the relay's multiaddr and hit "Dial Multiaddr" button (left side)</li>
+                <li>Choose the relay's multiaddr (webrtc-direct / or webtransport) and hit "Dial Multiaddr" button (left side)</li>
                 <li>Wait for a WebRTC address to appear in the "Listening Addresses" area (right side)</li>
                 <li>Click "Open / Scan" in scan the QR-Code in your mobile phone or click on the multi address to copy it to clipboard for opening it in another borwser)</li>
-                <li>Use the "Dial Multiaddr" section in the second window to dial the WebRTC address from the first</li>
-                <li>Subscribe both windows to the same topic using the "PubSub" section</li>
+                <li>Use the "Dial Multiaddr" section in the second window to dial the choosen multi address from the first browser</li>
+                <li>Subscribe both windows to the same topic</li>
                 <li>Send messages between the windows using the "PubSub" section</li>
             </ol>
 
@@ -188,12 +191,13 @@
                     placeholder="/ip4/127.0.0.1/tcp/1234/ws/p2p/123Foo"
                     titleText="Dial MultiAddr"
                     items={dialMultiaddrItems}
+                    size="sm"
             />
-            <Button on:click={dialMultiaddrButton} id="dial-multiaddr-button">Dial / Connect</Button>
+            <Button on:click={dialMultiaddrButton} id="dial-multiaddr-button" size="small">Dial / Connect</Button>
         </Column>
         <Column>
 
-        <TextInput labelText="PeerId" value={peerId} readonly id="dial-multiaddr-input"  placeholder="/ip4/127.0.0.1/tcp/1234/ws/p2p/123Foo" />
+        <TextInput labelText="PeerId" value={peerId} readonly id="dial-multiaddr-input"  placeholder="/ip4/127.0.0.1/tcp/1234/ws/p2p/123Foo"  size="sm" />
         <Select
                 disabled={listeningAddressList.length===0}
                 on:change={ (evt) =>  {
@@ -201,7 +205,8 @@
                         console.log("selectedListeningAddress",selectedListeningAddress)
                  }}
                 id="listeningAddressList"
-                abelText="Listening Addresses" >
+                labelText="Listening Addresses"
+                size="sm">
                 <SelectItem value={"choose"} />
                 {#each listeningAddressList as a}
                     <SelectItem value={a} />
@@ -209,8 +214,8 @@
         </Select>
 
             <Button disabled={listeningAddressList.length==0 || !selectedListeningAddress}
-                    on:click={() => { qrCodeOpen=(!qrCodeOpen) }}>Open / Scan</Button>
-                <Select id="connectedPeers" labelText="Connected Peers">
+                    on:click={() => { qrCodeOpen=(!qrCodeOpen) }} size="small">Open / Scan</Button>
+                <Select id="connectedPeers" labelText="Connected Peers" size="sm">
                     {#each peerConnectionsList as c}
                         <SelectItem value={c} />
                     {/each}
@@ -220,11 +225,11 @@
 <Row>
     <Column>
         <h2>PubSub</h2>
-        <TextInput labelText="Subscribe to topic"  bind:value={subscribeTopic} type="text" id="subscribe-topic-input" placeholder="my-topic" />
-        <Button on:click={subscribeTopicButton} id="subscribe-topic-button">Subscribe</Button>
+        <TextInput labelText="Subscribe to topic"  bind:value={subscribeTopic} type="text" id="subscribe-topic-input" placeholder="my-topic"     size="sm"/>
+        <Button on:click={subscribeTopicButton} id="subscribe-topic-button" size="small">Subscribe</Button>
     </Column>
     <Column>
-        <Select labelText="Topic PeersTopic Peers">
+        <Select labelText="Topic PeersTopic Peers"     size="sm">
             {#each topicPeerList as p}
                 <SelectItem value={p} />
             {/each}
@@ -233,13 +238,14 @@
 </Row>
 <Row>
     <Column>
-        <TextInput labelText="Send Message to Topic" bind:value={sendTopicMessage} type="text" id="send-topic-message-input" placeholder="hello world" disabled={sendTopicMessageInputDisabled}  />
-        <Button on:click={sendTopicMessageButton} id="send-topic-message-button" disabled={sendTopicMessageButtonDisabled}>Send</Button>
+        <TextInput labelText="Send Message to Topic" bind:value={sendTopicMessage} type="text" id="send-topic-message-input" placeholder="hello world" disabled={sendTopicMessageInputDisabled}     size="sm" />
+        <Button on:click={sendTopicMessageButton} id="send-topic-message-button" disabled={sendTopicMessageButtonDisabled} size="small">Send</Button>
     </Column>
         <Column>
-            <TextInput labelText="Filter Output" bind:value={filterOutput} type="text" placeholder="topic 'xyz'"   />
-
-            <TextArea labelText="Output" value={output}/>
+<!--            <TextInput labelText="Filter Output" bind:value={filterOutput} type="text" placeholder="topic 'xyz'"   />-->
+            <Checkbox checked={filterOutput} on:change={(evt) => {
+                filterOutput = evt.target.checked}}    />
+            <TextArea labelText="Output" value={output}  />
         </Column>
     </Row>
 </Grid>
