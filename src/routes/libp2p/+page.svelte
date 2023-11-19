@@ -1,10 +1,4 @@
 <script>
-    import { createLibp2p } from 'libp2p'
-    import { config } from './config.js'
-    import { multiaddr } from '@multiformats/multiaddr'
-    import { fromString, toString } from 'uint8arrays'
-    import { onMount } from "svelte";
-
     import {
         Column,
         Grid,
@@ -16,8 +10,15 @@
         TextArea,
         ComboBox, Checkbox
     } from "carbon-components-svelte";
-    import QRCodeModal from '../../lib/components/QRCodeModal.svelte'
+    import { onMount } from "svelte";
+    import { createLibp2p } from 'libp2p'
+    import { config } from './config.js'
     import { query } from '../router.js'
+    import { multiaddr } from '@multiformats/multiaddr'
+    import { fromString, toString } from 'uint8arrays'
+
+    import QRCodeModal from '../../lib/components/QRCodeModal.svelte'
+
     let libp2p
     let peerId
     let dialMultiaddr = localStorage.getItem("dialMultiaddr") || ''
@@ -40,12 +41,11 @@
 
     const dialMultiaddrItems =  [
         { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiBPLqSVH2jKwrFmaU-KJTy5I8NnKlJWnom-CeRprfc5EQ/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
-       // { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiD9nbBhAXN4rQqw8lNZF2ltpicsXzBSYrBaQ4SJu5JkOg/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
         { id: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM",
                 text: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport" }
         ]
 
-    $: {
+    $: { // if a query param was given in the url take the multiaddress
         if($query!==undefined && $query.split("=")[0]==='dial') {
             const textpart = $query.split("certhash")[0].substring(5) //cut away dial=
             dialMultiaddrItems.push({id:$query.split("=")[1],text:textpart})
@@ -59,19 +59,7 @@
 
     const appendOutput = (line) => {
         if(!line) return
-        // if(!filterOutput)
-            output = output+= `${line} \n`
-        // if(filterOutput){
-        //     console.log("filtering output with filter ",filterOutput)
-        //     let newOutput = ''
-        //     let lines = output.split('\n')
-        //     for (const lineKey in lines){
-        //          const thisLine = lines[lineKey]
-        //         if(thisLine.indexOf(filterOutput)!==-1)
-        //             newOutput = thisLine+"\n"
-        //     }
-        //     output=newOutput
-        // }
+        output = output+= `${line} \n`
     }
 
     const clean = (line) => line.replaceAll('\n', '')
