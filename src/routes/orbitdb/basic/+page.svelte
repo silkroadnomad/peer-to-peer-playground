@@ -132,7 +132,7 @@
         <Column  class="distance">Relay connected:</Column>
         <Column  class="distance">
             {#if relayConnected}
-                <WatsonHealthAiStatusComplete  class="statusGreen"/> {relaysMultiAddrs[0].text}
+                {relaysMultiAddrs[0].text} <WatsonHealthAiStatusComplete  class="statusGreen"/>
             {:else}
                 <WatsonHealthAiStatus class="statusRead" />
             {/if}
