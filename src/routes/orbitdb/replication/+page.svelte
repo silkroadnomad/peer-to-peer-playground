@@ -13,7 +13,7 @@
     import { onMount } from "svelte";
     import { createLibp2p } from 'libp2p'
     import { config } from '../config.js'
-    import { query } from '../router.js'
+    import { query } from '../../router.js'
     import { multiaddr } from '@multiformats/multiaddr'
     import { fromString, toString } from 'uint8arrays'
 
