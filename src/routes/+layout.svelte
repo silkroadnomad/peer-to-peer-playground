@@ -19,7 +19,7 @@
     import LibP2PPubSubExample from './libp2p/+page.svelte'
     import HeliaCounter from './helia/counter/+page.svelte'
     import HeliaCounter2 from './helia/counter2/+page.svelte'
-    import OrbitParticles from './orbitdb/+page.svelte'
+    import OrbitParticles from './orbitdb/basic/+page.svelte'
     import {goto} from "$app/navigation";
 
     let isSideNavOpen = false;
@@ -54,7 +54,8 @@
                 <HeaderPanelLink  href={ `#/helia/counter2` }>counter with LevelBlockstore</HeaderPanelLink>
 <!--                <HeaderPanelLink  href={ `helia/remotePinning'` } >helia remote pinning</HeaderPanelLink>-->
                 <HeaderPanelDivider>OrbitDB</HeaderPanelDivider>
-                <HeaderPanelLink  href={ `#/orbitdb` }>orbit-db examples</HeaderPanelLink>
+                <HeaderPanelLink  href={ `#/orbitdb/basic` }>orbit-db basic</HeaderPanelLink>
+                <HeaderPanelLink  href={ `#/orbitdb/replication` }>orbit-db replication</HeaderPanelLink>
             </HeaderPanelLinks>
         </HeaderAction>
     </HeaderUtilities>

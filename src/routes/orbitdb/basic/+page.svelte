@@ -1,20 +1,27 @@
 <script>
-    import { Button, TextArea } from "carbon-components-svelte";
+    import {Button, Column, Grid, Row, TextArea} from "carbon-components-svelte";
     import {onMount} from "svelte";
-    import Snow from './Snow.svelte'
+
+    import WatsonHealthAiStatus from "carbon-icons-svelte/lib/WatsonHealthAiStatus.svelte";
+    import WatsonHealthAiStatusComplete from "carbon-icons-svelte/lib/WatsonHealthAiStatusComplete.svelte";
 
     import { createHelia } from 'helia';
     import { createOrbitDB} from '@orbitdb/core';
     import { LevelBlockstore } from "blockstore-level"
     import { LevelDatastore } from "datastore-level";
     import {createLibp2p} from "libp2p";
-    import {config} from "../libp2p/config.js";
+    import {config} from "../../libp2p/config.js";
     import {multiaddr} from "@multiformats/multiaddr";
     import {toString} from "uint8arrays";
+    import Snow from "../Snow.svelte";
 
     let libp2p,helia,orbitdb,db,address;
+    let relayConnected = false
+
     let count = 0
     let peerConnectionsList = []
+    let listeningAddressList = []
+
     let blockstore = new LevelBlockstore("./helia-blocks")
     let datastore = new LevelDatastore("./helia-data")
     let output = ''
@@ -36,6 +43,13 @@
         libp2p.addEventListener("peer:discovery", (evt) => {
             console.log("peer:discovery",evt.detail.id.toString())
         });
+
+        libp2p.services.pubsub.addEventListener('subscription-change', event => {
+            // const topic = event.detail.topic
+            // const message = toString(event.detail.data)
+            console.log("event",event)
+            appendOutput(`subscription-change`)
+        })
         libp2p.services.pubsub.addEventListener('message', event => {
             const topic = event.detail.topic
             const message = toString(event.detail.data)
@@ -51,17 +65,29 @@
             console.log(" libp2p.getMultiaddrs()", libp2p.getMultiaddrs())
             const multiaddrs = libp2p.getMultiaddrs().map((ma) => ma.toString())
             console.log("multiaddrs",multiaddrs)
-            // listeningAddressList = multiaddrs;
+            listeningAddressList = multiaddrs;
         })
+
         helia = await createHelia({
             libp2p,
             blockstore,
             datastore
         });
+
         orbitdb = await createOrbitDB({ ipfs: helia, id: 'user1', directory: './orbitdb' })
         const dbAddress = "/orbitdb/zdpuB1aMLKeka41pLNGzPrZ9eNnX34bgnqopKDs6juUqa43iU"
         db = await orbitdb.open('helloworld')
+        address = db.address
         await connectKuboRelay()
+        await countDataInDB()
+
+        // const subscribeTopic = "orbitdb/nico"
+        // const sendTopicMessage = "hallo message"
+        // appendOutput(`Subscribing to '${subscribeTopic}`)
+        // libp2p.services.pubsub.subscribe(subscribeTopic)
+        //
+        // appendOutput(`Sending message '${sendTopicMessage}'`)
+        // await libp2p.services.pubsub.publish(subscribeTopic, fromString(sendTopicMessage))
     })
     const appendOutput = (line) => {
         if(!line) return
@@ -77,33 +103,84 @@
         const ma = multiaddr(relaysMultiAddrs[0].id)
         appendOutput(`Dialing '${ma}'`)
         await libp2p.dial(ma)
+        relayConnected = true
         appendOutput(`Connected to '${ma}'`)
     }
-</script>
-<h1>Simple OrbitDB Test</h1>
-our orbitdb address is {address}
-and we have {count} values in the database
-<p>&nbsp;</p>
-<Button size="small"
-        on:click={async () => {
-        console.log("click")
-        const amount = 10
-        for (let i = 0; i < amount; i++) {
-            await db.add('hello' + i)
-            console.log("added")
-        }
+
+    const countDataInDB = async () => {
         const db2 = await orbitdb.open('helloworld')
         for await (const record of db2.iterator()) {
-             console.log("read record",record)
+            console.log("read record",record)
+            count++
+            appendOutput(`counted ${count} records`)
         }
-}}>Write data to db</Button>
+    }
+</script>
+
+<h1>Simple OrbitDB Test</h1>
+our orbitdb address is {address}
+and we have {count} values in the database "{db?.name}"
+
+<Grid>
+    <Row>
+        <Column class="distance">Relay connected:</Column>
+        <Column class="distance">
+            {#if relayConnected}
+                <WatsonHealthAiStatusComplete  class="statusGreen"/>
+            {:else}
+                <WatsonHealthAiStatus class="statusRead" />
+            {/if}
+        </Column>
+    </Row>
+    <Row>
+        <Column class="distance">Multi Addresses Received:</Column>
+        <Column class="distance">
+            {#if listeningAddressList.length>0}
+                <WatsonHealthAiStatusComplete  class="statusGreen"/>
+            {:else}
+                <WatsonHealthAiStatus class="statusRead" />
+            {/if}
+        </Column>
+    </Row>
+</Grid>
+
+<p>&nbsp;</p>
+<Button size="small" on:click={
+    async () => {
+        const amount = count + 10
+        for (let i = count; i < amount; i++) {
+            await db.add('hello' + i)
+            count++
+            appendOutput(`added ${i} record`)
+        }
+    }
+}
+>Write data to db</Button>
+<Button size="small" on:click={
+    async () => {
+        db.drop()
+        appendOutput(`db ${address} dropped`)
+    }}>Drop db</Button>
 <TextArea labelText="Output" value={output}  />
 
 <div class='snow'>
-<!--    <Snow/>-->
+<!--<Snow/>-->
 </div>
 
 <style>
+    :global(.distance){
+        margin-top: 2rem;
+    }
+    :global(.statusRead) {
+        color: red;
+        width: 32px;
+        height: 32px;
+    }
+    :global(.statusGreen) {
+        color: green;
+        width: 32px;
+        height: 32px;
+    }
     :global(body) {
         background: #111;
     }
