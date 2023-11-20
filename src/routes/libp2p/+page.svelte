@@ -7,7 +7,6 @@
         TextInput,
         Select,
         SelectItem,
-        TextArea,
         ComboBox, Checkbox
     } from "carbon-components-svelte";
     import { onMount } from "svelte";
@@ -16,7 +15,7 @@
     import { query } from '../router.js'
     import { multiaddr } from '@multiformats/multiaddr'
     import { fromString, toString } from 'uint8arrays'
-
+    import OutputLog from "$lib/components/OutputLog.svelte";
     import QRCodeModal from '../../lib/components/QRCodeModal.svelte'
 
     let libp2p
@@ -35,7 +34,7 @@
     let selectedListeningAddress
 
     let filterOutput
-
+    let outputLogComp
     let qrCodeData
     $:qrCodeData = `${window.location.origin}/${window.location.hash}?dial=${encodeURI(selectedListeningAddress)}`
 
@@ -56,12 +55,7 @@
     /** store last dialedMultiAddress in localStorage */
     $: localStorage.setItem("dialMultiaddr",dialMultiaddr)
     $: localStorage.setItem("subscribeTopic",subscribeTopic)
-
-    const appendOutput = (line) => {
-        if(!line) return
-        output = output+= `${line} \n`
-    }
-
+    
     const clean = (line) => line.replaceAll('\n', '')
     onMount(async ()=>{
         libp2p = await createLibp2p(config)
@@ -90,9 +84,9 @@
             const message = toString(event.detail.data)
 
             if(!filterOutput)
-                appendOutput(`Message received on topic '${topic}': ${message}`)
+                outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
             else if (topic!=='_peer-discovery._p2p._pubsub')
-                appendOutput(`Message received on topic '${topic}': ${message}`)
+                outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
         })
 
         libp2p.addEventListener('self:peer:update', (evt) => {
@@ -113,14 +107,14 @@
     /** dial remote peer */
     const dialMultiaddrButton = async () => {
         const ma = multiaddr(dialMultiaddr)
-        appendOutput(`Dialing '${ma}'`)
+        outputLogComp.appendOutput(`Dialing '${ma}'`)
         await libp2p.dial(ma)
-        appendOutput(`Connected to '${ma}'`)
+        outputLogComp.appendOutput(`Connected to '${ma}'`)
     }
 
     /** subscribe to pubsub topic */
     const subscribeTopicButton = async () => {
-        appendOutput(`Subscribing to '${clean(subscribeTopic)}'`)
+        outputLogComp.appendOutput(`Subscribing to '${clean(subscribeTopic)}'`)
         const retVal = libp2p.services.pubsub.subscribe(subscribeTopic)
         console.log("retVal",retVal)
         sendTopicMessageInputDisabled = undefined
@@ -129,7 +123,7 @@
 
     /** send message to topic */
     const sendTopicMessageButton = async () => {
-        appendOutput(`Sending message '${clean(sendTopicMessage)}'`)
+        outputLogComp.appendOutput(`Sending message '${clean(sendTopicMessage)}'`)
         await libp2p.services.pubsub.publish(subscribeTopic, fromString(sendTopicMessage))
     }
 </script>
@@ -230,10 +224,8 @@
         <Button on:click={sendTopicMessageButton} id="send-topic-message-button" disabled={sendTopicMessageButtonDisabled} size="small">Send</Button>
     </Column>
         <Column>
-<!--            <TextInput labelText="Filter Output" bind:value={filterOutput} type="text" placeholder="topic 'xyz'"   />-->
-            <Checkbox checked={filterOutput} on:change={(evt) => {
-                filterOutput = evt.target.checked}}    />
-            <TextArea labelText="Output" value={output}  />
+            <Checkbox checked={filterOutput} on:change={(evt) => { filterOutput = evt.target.checked}}    />
+            <OutputLog bind:this={outputLogComp} labelText="Output" rows={10} />
         </Column>
     </Row>
 </Grid>

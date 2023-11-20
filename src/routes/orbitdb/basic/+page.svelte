@@ -14,6 +14,7 @@
     import {multiaddr} from "@multiformats/multiaddr";
     import {toString} from "uint8arrays";
     import Snow from "../Snow.svelte";
+    import OutputLog from "$lib/components/OutputLog.svelte";
 
     let libp2p,helia,orbitdb,db,address;
     let relayConnected = false
@@ -24,7 +25,7 @@
 
     let blockstore = new LevelBlockstore("./helia-blocks")
     let datastore = new LevelDatastore("./helia-data")
-    let output = ''
+    let outputLogComp
     const relaysMultiAddrs =  [
         { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiBcDqgg_PQNURYgEM7UG2xuWSy-cXyvFiWp1EMDuS0gug/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
         { id: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM",
@@ -48,7 +49,8 @@
             // const topic = event.detail.topic
             // const message = toString(event.detail.data)
             console.log("event",event)
-            appendOutput(`subscription-change`)
+            outputLogComp.appendOutput(`subscription-change`)
+        
         })
         libp2p.services.pubsub.addEventListener('message', event => {
             const topic = event.detail.topic
@@ -57,7 +59,7 @@
             // if(!filterOutput)
             //     appendOutput(`Message received on topic '${topic}': ${message}`)
             // else if (topic!=='_peer-discovery._p2p._pubsub')
-                appendOutput(`Message received on topic '${topic}': ${message}`)
+            outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
         })
 
         libp2p.addEventListener('self:peer:update', (evt) => {
@@ -89,23 +91,20 @@
         // appendOutput(`Sending message '${sendTopicMessage}'`)
         // await libp2p.services.pubsub.publish(subscribeTopic, fromString(sendTopicMessage))
     })
-    const appendOutput = (line) => {
-        if(!line) return
-        output = `${line} \n`+output
-    }
+
 
     function updatePeerList () {
         const peerList = libp2p.getPeers().map(peerId => peerId.toString())
         peerConnectionsList = peerList
-        appendOutput(`gathered our multi addresses from ${peerConnectionsList}`)
+        outputLogComp.appendOutput(`gathered our multi addresses from ${peerConnectionsList}`)
         console.log("updatePeerList",peerConnectionsList)
     }
     const connectKuboRelay = async () => {
         const ma = multiaddr(relaysMultiAddrs[0].id)
-        appendOutput(`Dialing '${ma}'`)
+        outputLogComp.appendOutput(`Dialing '${ma}'`)
         await libp2p.dial(ma)
         relayConnected = true
-        appendOutput(`Connected to '${ma}'`)
+        outputLogComp.appendOutput(`Connected to '${ma}'`)
     }
 
     const countDataInDB = async () => {
@@ -113,7 +112,7 @@
         for await (const record of db2.iterator()) {
             console.log("read record",record)
             count++
-            appendOutput(`counted ${count} records`)
+            outputLogComp.appendOutput(`counted ${count} records`)
         }
     }
 </script>
@@ -157,7 +156,7 @@
                     for (let i = count; i < amount; i++) {
                         await db.add('hello' + i)
                         count++
-                        appendOutput(`added ${i} record`)
+                        outputLogComp.appendOutput(`added ${i} record`)
                     }
                 }
             }>Write 10 records to OrbitDB</Button>
@@ -166,12 +165,12 @@
             <Button size="small" on:click={
                     async () => {
                         db.drop()
-                        appendOutput(`db ${address} dropped`)
+                        outputLogComp.appendOutput(`db ${address} dropped`)
                     }}>Drop db</Button>
         </Column>
     </Row>
     <Row>
-        <Column><TextArea labelText="Output" rows={10} value={output}  /></Column>
+        <Column><OutputLog bind:this={outputLogComp}  labelText="Output" rows={10} /></Column>
     </Row>
 </Grid>
 
