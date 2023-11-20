@@ -16,7 +16,16 @@
     import Snow from "../Snow.svelte";
     import OutputLog from "$lib/components/OutputLog.svelte";
 
-    let libp2p,helia,orbitdb,db,address;
+    /** @type {import("libp2p").Libp2p} */
+    let libp2p;
+    /** @type {import('helia').Helia} */
+    let helia;
+    /** @type {import("@orbitdb/core").OrbitDB} */
+    let orbitdb;
+    /** @type {import("@orbitdb/core").Store} */
+    let db;
+    /** @type {string} */
+    let address;
     let relayConnected = false
 
     let count = 0
