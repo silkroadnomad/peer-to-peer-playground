@@ -55,7 +55,7 @@
 <!--                <HeaderPanelLink  href={ `helia/remotePinning'` } >helia remote pinning</HeaderPanelLink>-->
                 <HeaderPanelDivider>OrbitDB</HeaderPanelDivider>
                 <HeaderPanelLink  href={ `#/orbitdb/basic` }>orbit-db basic</HeaderPanelLink>
-                <HeaderPanelLink  href={ `#/orbitdb/replication` }>orbit-db replication</HeaderPanelLink>
+<!--                <HeaderPanelLink  href={ `#/orbitdb/replication` }>orbit-db replication</HeaderPanelLink>-->
             </HeaderPanelLinks>
         </HeaderAction>
     </HeaderUtilities>

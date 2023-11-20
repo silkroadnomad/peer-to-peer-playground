@@ -118,27 +118,33 @@
 </script>
 
 <h1>Simple OrbitDB Test</h1>
-our orbitdb address is {address}
-and we have {count} values in the database "{db?.name}"
 
 <Grid>
     <Row>
-        <Column class="distance">Relay connected:</Column>
-        <Column class="distance">
+        <Column class="distance">OrbitDB address:</Column>
+        <Column class="distance">{address} </Column>
+    </Row>
+    <Row>
+        <Column class="distance">OrbitDB name:</Column>
+        <Column class="distance">{db?.name}</Column>
+    </Row>
+    <Row>
+        <Column  class="distance">Relay connected:</Column>
+        <Column  class="distance">
             {#if relayConnected}
-                <WatsonHealthAiStatusComplete  class="statusGreen"/>
+                <WatsonHealthAiStatusComplete  class="statusGreen"/> {relaysMultiAddrs[0].text}
             {:else}
                 <WatsonHealthAiStatus class="statusRead" />
             {/if}
         </Column>
     </Row>
     <Row>
-        <Column class="distance">Multi Addresses Received:</Column>
-        <Column class="distance">
+        <Column  class="distance">Multi Addresses Received:</Column>
+        <Column  class="distance">
             {#if listeningAddressList.length>0}
-                <WatsonHealthAiStatusComplete  class="statusGreen"/>
+                {listeningAddressList.length} <WatsonHealthAiStatusComplete  class="statusGreen"/>
             {:else}
-                <WatsonHealthAiStatus class="statusRead" />
+                 {listeningAddressList.length}  <WatsonHealthAiStatus class="statusRead" />
             {/if}
         </Column>
     </Row>
@@ -154,8 +160,7 @@ and we have {count} values in the database "{db?.name}"
             appendOutput(`added ${i} record`)
         }
     }
-}
->Write data to db</Button>
+}>Write 10 records to OrbitDB</Button>
 <Button size="small" on:click={
     async () => {
         db.drop()
@@ -173,13 +178,13 @@ and we have {count} values in the database "{db?.name}"
     }
     :global(.statusRead) {
         color: red;
-        width: 32px;
-        height: 32px;
+        width: 16px;
+        height: 16px;
     }
     :global(.statusGreen) {
         color: green;
-        width: 32px;
-        height: 32px;
+        width: 16px;
+        height: 16px;
     }
     :global(body) {
         background: #111;
