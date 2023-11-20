@@ -91,12 +91,13 @@
     })
     const appendOutput = (line) => {
         if(!line) return
-        output = output+= `${line} \n`
+        output = `${line} \n`+output
     }
 
     function updatePeerList () {
         const peerList = libp2p.getPeers().map(peerId => peerId.toString())
         peerConnectionsList = peerList
+        appendOutput(`gathered our multi addresses from ${peerConnectionsList}`)
         console.log("updatePeerList",peerConnectionsList)
     }
     const connectKuboRelay = async () => {
@@ -148,25 +149,35 @@
             {/if}
         </Column>
     </Row>
+    <Row>
+        <Column class="distance">
+            <Button size="small" on:click={
+                async () => {
+                    const amount = count + 10
+                    for (let i = count; i < amount; i++) {
+                        await db.add('hello' + i)
+                        count++
+                        appendOutput(`added ${i} record`)
+                    }
+                }
+            }>Write 10 records to OrbitDB</Button>
+        </Column>
+        <Column class="distance">
+            <Button size="small" on:click={
+                    async () => {
+                        db.drop()
+                        appendOutput(`db ${address} dropped`)
+                    }}>Drop db</Button>
+        </Column>
+    </Row>
+    <Row>
+        <Column><TextArea labelText="Output" rows={10} value={output}  /></Column>
+    </Row>
 </Grid>
 
 <p>&nbsp;</p>
-<Button size="small" on:click={
-    async () => {
-        const amount = count + 10
-        for (let i = count; i < amount; i++) {
-            await db.add('hello' + i)
-            count++
-            appendOutput(`added ${i} record`)
-        }
-    }
-}>Write 10 records to OrbitDB</Button>
-<Button size="small" on:click={
-    async () => {
-        db.drop()
-        appendOutput(`db ${address} dropped`)
-    }}>Drop db</Button>
-<TextArea labelText="Output" value={output}  />
+
+
 
 <div class='snow'>
 <!--<Snow/>-->
@@ -174,6 +185,7 @@
 
 <style>
     :global(.distance){
+        padding-top: 1rem;
         margin-top: 2rem;
     }
     :global(.statusRead) {

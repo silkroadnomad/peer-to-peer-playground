@@ -33,8 +33,6 @@
         '/orbitdb/basic': OrbitParticles
     }
     $: view = routes[$hash]
-    // $:console.log("query",$query)
-    // $:console.log("hash",$hash)
 </script>
 <Theme bind:theme={theme}/>
 <Header company="Le Space" platformName="Peer-To-Peer Playground " bind:isSideNavOpen href={ `/#` }>
