@@ -30,7 +30,7 @@
         '/libp2p/pubsub': LibP2PPubSubExample,
         '/helia/counter': HeliaCounter,
         '/helia/counter2': HeliaCounter2,
-        '/orbitdb': OrbitParticles
+        '/orbitdb/basic': OrbitParticles
     }
     $: view = routes[$hash]
     // $:console.log("query",$query)
