@@ -119,8 +119,14 @@
         });
 
         fs = unixfs(helia)
-        if(cid) count = await fs.cat("/ipfs/"+cid.toString())
-        console.log("count->",count)
+        if(cid) {
+            const textDecoder = new TextDecoder()
+            let _count = ''
+            for await (const chunk of fs.cat(cid)) {
+                _count += textDecoder.decode(chunk)
+            }
+            count =_count
+        }
     });
 
     const increment = async () => {
