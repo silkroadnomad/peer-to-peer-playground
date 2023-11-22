@@ -13,12 +13,13 @@
     import LogoGithub from "carbon-icons-svelte/lib/LogoGithub.svelte";
     import "carbon-components-svelte/css/all.css";
     import { expoIn } from "svelte/easing";
-    import { hash,query } from './router.js'
+    import { hash } from './router.js'
     import Home from './+page.svelte'
 
     import LibP2PPubSubExample from './libp2p/+page.svelte'
     import HeliaCounter from './helia/counter/+page.svelte'
     import HeliaCounter2 from './helia/counter2/+page.svelte'
+    import ConnectedCounter from './helia/counter3/+page.svelte'
     import OrbitParticles from './orbitdb/basic/+page.svelte'
     import {goto} from "$app/navigation";
 
@@ -30,6 +31,7 @@
         '/libp2p/pubsub': LibP2PPubSubExample,
         '/helia/counter': HeliaCounter,
         '/helia/counter2': HeliaCounter2,
+        '/helia/counter3': ConnectedCounter,
         '/orbitdb/basic': OrbitParticles
     }
     $: view = routes[$hash]
@@ -50,6 +52,7 @@
                 <HeaderPanelDivider>Helia</HeaderPanelDivider>
                 <HeaderPanelLink  href={ `#/helia/counter` }>counter with MemoryBlockstore</HeaderPanelLink>
                 <HeaderPanelLink  href={ `#/helia/counter2` }>counter with LevelBlockstore</HeaderPanelLink>
+                <HeaderPanelLink  href={ `#/helia/counter3` }>counter connected to IPFS network</HeaderPanelLink>
 <!--                <HeaderPanelLink  href={ `helia/remotePinning'` } >helia remote pinning</HeaderPanelLink>-->
                 <HeaderPanelDivider>OrbitDB</HeaderPanelDivider>
                 <HeaderPanelLink  href={ `#/orbitdb/basic` }>orbit-db basic</HeaderPanelLink>

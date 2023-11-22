@@ -15,6 +15,8 @@
     import {toString} from "uint8arrays";
     import Snow from "../Snow.svelte";
     import OutputLog from "$lib/components/OutputLog.svelte";
+    import QRCodeModal from "$lib/components/QRCodeModal.svelte";
+    import {query} from "../../router.js";
 
     /** @type {import("libp2p").Libp2p} */
     let libp2p;
@@ -35,6 +37,21 @@
     let blockstore = new LevelBlockstore("./helia-blocks")
     let datastore = new LevelDatastore("./helia-data")
     let outputLogComp
+    let qrCodeOpen;
+    let qrCodeData;
+    let address2Connect = 'helloWorld'
+    $:qrCodeData = `${window.location.origin}/${window.location.hash}?db=${encodeURI(address)}`
+
+    $: { // if a query param was given in the url take the multiaddress
+        if($query!==undefined && $query.split("=")[0]==='db') {
+            address2Connect = $query.split("=")[1]
+            console.log("connecting to db",address2Connect)
+            // const textpart = $query.split("certhash")[0].substring(5) //cut away dial=
+            // dialMultiaddrItems.push({id:$query.split("=")[1],text:textpart})
+            // dialMultiaddr=dialMultiaddrItems[dialMultiaddrItems.length-1].id //preselect the last added
+        }
+    }
+
     const relaysMultiAddrs =  [
         { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiBcDqgg_PQNURYgEM7UG2xuWSy-cXyvFiWp1EMDuS0gug/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
         { id: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM",
@@ -84,12 +101,14 @@
             blockstore,
             datastore
         });
+        await connectKuboRelay()
 
         orbitdb = await createOrbitDB({ ipfs: helia, id: 'user1', directory: './orbitdb' })
-        const dbAddress = "/orbitdb/zdpuB1aMLKeka41pLNGzPrZ9eNnX34bgnqopKDs6juUqa43iU"
-        db = await orbitdb.open('helloworld')
+        // const dbAddress = "/orbitdb/zdpuB1aMLKeka41pLNGzPrZ9eNnX34bgnqopKDs6juUqa43iU"
+        console.log("connecting now to",address2Connect)
+        db = await orbitdb.open(address2Connect)
         address = db.address
-        await connectKuboRelay()
+        console.log("address now",address)
         await countDataInDB()
 
         // const subscribeTopic = "orbitdb/nico"
@@ -117,7 +136,7 @@
     }
 
     const countDataInDB = async () => {
-        const db2 = await orbitdb.open('helloworld')
+        const db2 = await orbitdb.open(address2Connect)
         for await (const record of db2.iterator()) {
             console.log("read record",record)
             count++
@@ -132,6 +151,10 @@
     <Row>
         <Column class="distance">OrbitDB address:</Column>
         <Column class="distance">{address} </Column>
+        <Column class="distance"> <QRCodeModal bind:qrCodeOpen={qrCodeOpen}
+                                                on:close={qrCodeOpen=false}
+                                                qrCodeData={qrCodeData} />        <Button disabled={!address}
+                                                                                          on:click={() => { qrCodeOpen=(!qrCodeOpen) }} size="small">Open / Scan</Button></Column>
     </Row>
     <Row>
         <Column class="distance">OrbitDB name:</Column>

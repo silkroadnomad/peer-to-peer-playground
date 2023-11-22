@@ -8,7 +8,6 @@
         if(!line) return
         output = `${line} \n`+output
     }
-
 </script>
 
 <TextArea labelText={labelText} rows={rows} value={output} />
