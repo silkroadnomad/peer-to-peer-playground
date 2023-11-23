@@ -1,4 +1,5 @@
 import {webSockets} from "@libp2p/websockets";
+import { bootstrap } from '@libp2p/bootstrap'
 import * as filters from "@libp2p/websockets/filters";
 import {webRTC, webRTCDirect} from "@libp2p/webrtc";
 import {webTransport} from "@libp2p/webtransport";
