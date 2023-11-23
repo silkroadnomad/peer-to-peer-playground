@@ -70,6 +70,7 @@
         await libp2p.dial(ma)
         relayConnected = true
         outputLogComp.appendOutput(`Connected to '${ma}'`)
+
     }
 
     onMount(async () => {

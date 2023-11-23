@@ -1,5 +1,5 @@
 <script>
-    import {Button, Column, Grid, Row, TextArea} from "carbon-components-svelte";
+    import {Button, Column, Grid, Row, TextArea, Toggle} from "carbon-components-svelte";
     import {onMount} from "svelte";
 
     import WatsonHealthAiStatus from "carbon-icons-svelte/lib/WatsonHealthAiStatus.svelte";
@@ -13,10 +13,12 @@
     import {config} from "../../libp2p/config.js";
     import {multiaddr} from "@multiformats/multiaddr";
     import {toString} from "uint8arrays";
-    import Snow from "../Snow.svelte";
+
     import OutputLog from "$lib/components/OutputLog.svelte";
     import QRCodeModal from "$lib/components/QRCodeModal.svelte";
     import {query} from "../../router.js";
+    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+    import Snow from "../Snow.svelte";
 
     /** @type {import("libp2p").Libp2p} */
     let libp2p;
@@ -40,23 +42,51 @@
     let qrCodeOpen;
     let qrCodeData;
     let address2Connect = 'helloWorld'
-    $:qrCodeData = `${window.location.origin}/${window.location.hash}?db=${encodeURI(address)}`
-
-    $: { // if a query param was given in the url take the multiaddress
-        if($query!==undefined && $query.split("=")[0]==='db') {
-            address2Connect = $query.split("=")[1]
-            console.log("connecting to db",address2Connect)
-            // const textpart = $query.split("certhash")[0].substring(5) //cut away dial=
-            // dialMultiaddrItems.push({id:$query.split("=")[1],text:textpart})
-            // dialMultiaddr=dialMultiaddrItems[dialMultiaddrItems.length-1].id //preselect the last added
-        }
-    }
+    let selectedListeningAddress;
 
     const relaysMultiAddrs =  [
         { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiBcDqgg_PQNURYgEM7UG2xuWSy-cXyvFiWp1EMDuS0gug/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
         { id: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM",
             text: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport" }
     ]
+
+    let  multiAddress2Connect =  localStorage.getItem("multiAddres2Connect")?localStorage.getItem("multiAddres2Connect"):(isFirefox?relaysMultiAddrs[0].id:relaysMultiAddrs[1].id)
+    console.log("multiAddress2Connect",multiAddress2Connect)
+
+    const urlParams = new URLSearchParams($query);
+    multiAddress2Connect = urlParams.get('dial')?urlParams.get('dial'):multiAddress2Connect //if there's a dial param use that address for a connection!
+
+    const connect2DB = async (_address2Connect) => {
+        db = await orbitdb.open(_address2Connect)
+        address = db.address
+        console.log("db address now",address)
+        await countDataInDB()
+    }
+
+    address2Connect = urlParams.get('db') || address2Connect
+    console.log("address2Connect",address2Connect)
+    $: {
+        if(orbitdb && address2Connect) connect2DB(address2Connect)
+    }
+
+    let transportToggleWebtransport= (multiAddress2Connect.indexOf('webtransport')!==-1) ? true : false;
+    console.log("transportToggleWebtransport",transportToggleWebtransport)
+    $: {
+        //if we have dial param do not switch connection!
+        if(!urlParams.get('dial')){
+            transportToggleWebtransport === true ? multiAddress2Connect = relaysMultiAddrs[1].id :multiAddress2Connect = relaysMultiAddrs[0].id;
+            outputLogComp?.appendOutput(`Switching Transport to ${multiAddress2Connect}`)
+            console.log("multiAddress2Connect",multiAddress2Connect)
+        }
+    }
+    //selectedListeningAddress appears as soon as we got our multiaddress from kubo (relay) in this case we choose the address which we connected with
+    $:{
+        selectedListeningAddress=transportToggleWebtransport?listeningAddressList.find(addr=>addr.indexOf('/webtransport')!==-1):listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct')!==-1)
+        console.log("--->selectedListeningAddress now:",selectedListeningAddress)
+    }
+    //qrCodeData creates an url with db (dbaddress) and dial (multiaddr) param
+    $:qrCodeData = `${window.location.origin}/${window.location.hash}?db=${encodeURI(address)}&dial=${encodeURI(selectedListeningAddress)}`
+
     onMount(async () => {
         libp2p = await createLibp2p(config)
         libp2p.addEventListener('connection:open', (evt) => {
@@ -70,7 +100,7 @@
         libp2p.addEventListener("peer:discovery", (evt) => {
             console.log("peer:discovery",evt.detail.id.toString())
         });
-
+        libp2p.services.pubsub.addEventListener('subscription-change', event => console.log("event",event))
         libp2p.services.pubsub.addEventListener('subscription-change', event => {
             // const topic = event.detail.topic
             // const message = toString(event.detail.data)
@@ -93,23 +123,28 @@
             console.log(" libp2p.getMultiaddrs()", libp2p.getMultiaddrs())
             const multiaddrs = libp2p.getMultiaddrs().map((ma) => ma.toString())
             console.log("multiaddrs",multiaddrs)
+            if(multiaddrs.length>0){
+                outputLogComp.appendOutput(`multiaddrs found '${multiaddrs}' now connecting to db ${address2Connect}`)
+                connect2DB(address2Connect)
+            }
             listeningAddressList = multiaddrs;
+           // selectedListeningAddress = listeningAddressList.find((addr)=>addr.indexOf(transportToggleWebtransport?'/webtransport':'/webrtc-direct'))
         })
+        window.libp2p = libp2p
 
         helia = await createHelia({
             libp2p,
             blockstore,
             datastore
         });
+        window.helia = helia
         await connectKuboRelay()
 
         orbitdb = await createOrbitDB({ ipfs: helia, id: 'user1', directory: './orbitdb' })
-        // const dbAddress = "/orbitdb/zdpuB1aMLKeka41pLNGzPrZ9eNnX34bgnqopKDs6juUqa43iU"
-        console.log("connecting now to",address2Connect)
-        db = await orbitdb.open(address2Connect)
-        address = db.address
-        console.log("address now",address)
-        await countDataInDB()
+        if(!$query){
+            outputLogComp.appendOutput("query not given - doing default connect")
+            connect2DB(address2Connect)
+        }
 
         // const subscribeTopic = "orbitdb/nico"
         // const sendTopicMessage = "hallo message"
@@ -124,15 +159,17 @@
     function updatePeerList () {
         const peerList = libp2p.getPeers().map(peerId => peerId.toString())
         peerConnectionsList = peerList
-        outputLogComp.appendOutput(`gathered our multi addresses from ${peerConnectionsList}`)
+        outputLogComp.appendOutput(`gathered peerConnectionsList from ${peerConnectionsList}`)
         console.log("updatePeerList",peerConnectionsList)
     }
     const connectKuboRelay = async () => {
-        const ma = multiaddr(relaysMultiAddrs[0].id)
+        relayConnected = false
+        const ma = multiaddr(multiAddress2Connect)
         outputLogComp.appendOutput(`Dialing '${ma}'`)
         await libp2p.dial(ma)
         relayConnected = true
         outputLogComp.appendOutput(`Connected to '${ma}'`)
+        localStorage.setItem("multiAddress2Connect",multiAddress2Connect)
     }
 
     const countDataInDB = async () => {
@@ -149,65 +186,70 @@
 
 <Grid>
     <Row>
+        <Column class="distance">PeerId:</Column>
+        <Column class="distance">{libp2p?libp2p.peerId.toString():'initializing...'}</Column>
+    </Row>
+    <Row>
         <Column class="distance">OrbitDB address:</Column>
-        <Column class="distance">{address} </Column>
-        <Column class="distance"> <QRCodeModal bind:qrCodeOpen={qrCodeOpen}
-                                                on:close={qrCodeOpen=false}
-                                                qrCodeData={qrCodeData} />        <Button disabled={!address}
-                                                                                          on:click={() => { qrCodeOpen=(!qrCodeOpen) }} size="small">Open / Scan</Button></Column>
+        <Column class="distance">
+            <QRCodeModal bind:qrCodeOpen={qrCodeOpen} on:close={qrCodeOpen=false} qrCodeData={qrCodeData} />
+            <Button disabled={!address || !multiAddress2Connect} on:click={() => { qrCodeOpen=(!qrCodeOpen) }} size="small">Open / Scan</Button>
+        </Column>
+        <Column class="distance">{address}</Column>
     </Row>
     <Row>
         <Column class="distance">OrbitDB name:</Column>
         <Column class="distance">{db?.name}</Column>
     </Row>
     <Row>
-        <Column  class="distance">Relay connected:</Column>
-        <Column  class="distance">
+        <Column class="distance">Relay connected:</Column>
+        <Column>
+            <Toggle labelText={transportToggleWebtransport?'Connect to Relay via WebTransport':'Connect to Relay via WebRTC-Direct'}
+                    toggled={transportToggleWebtransport} on:change={()=>{
+                        transportToggleWebtransport=(!transportToggleWebtransport)
+                        connectKuboRelay()
+                    }} />
+        </Column>
+        <Column class="distance">
             {#if relayConnected}
-                {relaysMultiAddrs[0].text} <WatsonHealthAiStatusComplete  class="statusGreen"/>
+                { relaysMultiAddrs.find(it => it.id===multiAddress2Connect)?.text} <WatsonHealthAiStatusComplete  class="statusGreen"/>
             {:else}
                 <WatsonHealthAiStatus class="statusRead" />
             {/if}
         </Column>
     </Row>
     <Row>
-        <Column  class="distance">Multi Addresses Received:</Column>
-        <Column  class="distance">
+        <Column class="distance">Multi Addresses Received:</Column>
+        <Column class="distance">
             {#if listeningAddressList.length>0}
                 {listeningAddressList.length} <WatsonHealthAiStatusComplete  class="statusGreen"/>
             {:else}
-                 {listeningAddressList.length}  <WatsonHealthAiStatus class="statusRead" />
+                {listeningAddressList.length}  <WatsonHealthAiStatus class="statusRead" />
             {/if}
         </Column>
     </Row>
     <Row>
         <Column class="distance">
-            <Button size="small" on:click={
-                async () => {
-                    const amount = count + 10
-                    for (let i = count; i < amount; i++) {
-                        await db.add('hello' + i)
-                        count++
-                        outputLogComp.appendOutput(`added ${i} record`)
-                    }
+            <Button size="small" on:click={async () => {
+                const amount = count + 10
+                for (let i = count; i < amount; i++) {
+                    await db.add('hello' + i)
+                    count++
+                    outputLogComp.appendOutput(`added ${i} record`)
                 }
-            }>Write 10 records to OrbitDB</Button>
+            }}>Write 10 records to OrbitDB</Button>
         </Column>
         <Column class="distance">
-            <Button size="small" on:click={
-                    async () => {
-                        db.drop()
-                        outputLogComp.appendOutput(`db ${address} dropped`)
-                    }}>Drop db</Button>
+            <Button size="small" on:click={async () => {
+                db.drop()
+                outputLogComp.appendOutput(`db ${address} dropped`)
+            }}>Drop db</Button>
         </Column>
     </Row>
     <Row>
         <Column><OutputLog bind:this={outputLogComp}  labelText="Output" rows={10} /></Column>
     </Row>
 </Grid>
-
-<p>&nbsp;</p>
-
 
 
 <div class='snow'>

@@ -10,7 +10,7 @@ import {pubsubPeerDiscovery} from "@libp2p/pubsub-peer-discovery";
 import {identifyService} from "libp2p/identify";
 import {autoNATService} from "libp2p/autonat";
 import {gossipsub} from "@chainsafe/libp2p-gossipsub";
-
+import { pingService } from 'libp2p/ping'
 // const address = "/dns4/ipfs.le-space.de/tcp/9091/wss/p2p-webrtc-star'"
 const multiaddrs = [ //add your own WebRTC Stars Servers here too!
     "/ip4/127.0.0.1/udp/4001/quic-v1/webtransport/certhash/uEiB8WKzyyA6fkDtE5JjEG-ZV4t4Y2vhLh8-G1kUhroZRuA/certhash/uEiAfJRn5MZPIJea_8SzaRF-BcpIjoXBPBIQr4TdOHzNnFA/p2p/12D3KooWJMzFdrzM7peD4het8s8gcRmQq1Jx4VzyM4eMnKQjbA4L"
@@ -58,6 +58,9 @@ export const config = {
         pubsubPeerDiscovery()
     ],
     services: {
+        ping: pingService({
+            protocolPrefix: 'ipfs', // default
+        }),
         identify: identifyService(),
         autoNAT: autoNATService(),
         pubsub: gossipsub({allowPublishToZeroPeers: true, canRelayMessage: true})
