@@ -12,8 +12,8 @@
     <Row>
         <Column>
             <h2>Connected Helia Counter</h2>
-            <p>This counter should store it's value inside the browsers Helia node as before the value
-                but should be readable by the rest of the IPFS network.
+            <p>This counter store it's value inside the browsers Helia node as before.
+                But the value should be readable by the rest of the IPFS network since we connect to a ipfs node (Kubo) via webrtc-direct / webtransport.
             </p>
         </Column>
         <Column>
