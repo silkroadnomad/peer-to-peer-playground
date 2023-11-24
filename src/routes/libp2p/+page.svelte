@@ -1,130 +1,102 @@
 <script>
-    import {
-        Column,
-        Grid,
-        Row,
-        Button,
-        TextInput,
-        Select,
-        SelectItem,
-        ComboBox, Checkbox
-    } from "carbon-components-svelte";
-    import { onMount } from "svelte";
-    import { createLibp2p } from 'libp2p'
-    import { config } from './config.js'
-    import { query } from '../router.js'
-    import { multiaddr } from '@multiformats/multiaddr'
-    import { fromString, toString } from 'uint8arrays'
-    import OutputLog from "$lib/components/OutputLog.svelte";
-    import QRCodeModal from '../../lib/components/QRCodeModal.svelte'
+import { onMount } from "svelte";
+import {
+    Column,
+    Grid,
+    Row,
+    Button,
+    TextInput,
+    Select,
+    SelectItem,
+    ComboBox,
+    Checkbox
+} from "carbon-components-svelte";
 
-    let libp2p
-    let peerId
-    let dialMultiaddr = localStorage.getItem("dialMultiaddr") || ''
-    let subscribeTopic  = localStorage.getItem("subscribeTopic") || ''
-    let topicPeerList = []
-    let sendTopicMessageInputDisabled = false
-    let sendTopicMessageButtonDisabled = false
-    let sendTopicMessage
-    let listeningAddressList = []
-    let peerConnectionsList = []
+import { createLibp2p } from 'libp2p';
+import { multiaddr } from '@multiformats/multiaddr';
+import { fromString, toString } from 'uint8arrays';
+import { config, dialMultiaddrItems } from './config.js';
+import {handleOpenConnection, handleCloseConnection, handlePeerDiscovery, handlePeerUpdate} from './libp2pEvents.js'
+import { query } from '../router.js';
+import { libp2p, listeningAddressList, peerConnectionsList} from "../../stores.js";
+import OutputLog from "$lib/components/OutputLog.svelte";
+import QRCodeModal from '../../lib/components/QRCodeModal.svelte';
 
-    let qrCodeOpen;
-    let selectedListeningAddress
+let peerId
+let dialMultiaddr = localStorage.getItem("dialMultiaddr") || ''
+let subscribeTopic  = localStorage.getItem("subscribeTopic") || ''
+let topicPeerList = []
+let sendTopicMessageInputDisabled = false
+let sendTopicMessageButtonDisabled = false
+let sendTopicMessage
+let qrCodeOpen;
+let selectedListeningAddress
+let filterOutput
+let outputLogComp
+let qrCodeData
 
-    let filterOutput
-    let outputLogComp
-    let qrCodeData
-    $:qrCodeData = `${window.location.origin}/${window.location.hash}?dial=${encodeURI(selectedListeningAddress)}`
-
-    const dialMultiaddrItems =  [
-        { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiBcDqgg_PQNURYgEM7UG2xuWSy-cXyvFiWp1EMDuS0gug/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
-        { id: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM",
-                text: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport" }
-        ]
-
-    $: { // if a query param was given in the url take the multiaddress
-        if($query!==undefined && $query.split("=")[0]==='dial') {
-            const textpart = $query.split("certhash")[0].substring(5) //cut away dial=
-            dialMultiaddrItems.push({id:$query.split("=")[1],text:textpart})
-            dialMultiaddr=dialMultiaddrItems[dialMultiaddrItems.length-1].id //preselect the last added
-        }
+$:qrCodeData = `${window.location.origin}/${window.location.hash}?dial=${encodeURI(selectedListeningAddress)}`
+$: {
+    if($query!==undefined && $query.split("=")[0]==='dial') {
+        const textpart = $query.split("certhash")[0].substring(5) //cut away dial=
+        dialMultiaddrItems.push({id:$query.split("=")[1],text:textpart})
+        dialMultiaddr=dialMultiaddrItems[dialMultiaddrItems.length-1].id //preselect the last added
     }
+}
 
-    /** store last dialedMultiAddress in localStorage */
-    $: localStorage.setItem("dialMultiaddr",dialMultiaddr)
-    $: localStorage.setItem("subscribeTopic",subscribeTopic)
-    
-    const clean = (line) => line.replaceAll('\n', '')
-    onMount(async ()=>{
-        libp2p = await createLibp2p(config)
-        peerId = libp2p.peerId.toString()
-        libp2p.addEventListener('connection:open', (evt) => {
-            console.log("connection:open",evt)
-            updatePeerList()
-        })
-        libp2p.addEventListener('connection:close', (evt) => {
-            console.log("connection:close",evt)
-            updatePeerList()
-        })
-        libp2p.addEventListener("peer:discovery", (evt) => {
-            console.log("peer:discovery",evt.detail.id.toString())
-        });
+$: localStorage.setItem("dialMultiaddr",dialMultiaddr)
+$: localStorage.setItem("subscribeTopic",subscribeTopic)
+const clean = (line) => line.replaceAll('\n', '')
 
-        setInterval(() => {
-            if(libp2p){
-                const peerList = libp2p.services.pubsub.getSubscribers(subscribeTopic).map(peerId => peerId.toString())
-                topicPeerList = peerList;
-            }
-        }, 1500)
+onMount(async ()=>{
+    $libp2p = await createLibp2p(config)
+    peerId = $libp2p.peerId.toString()
+    $libp2p.addEventListener('connection:open', handleOpenConnection);
+    $libp2p.addEventListener('connection:close', handleCloseConnection);
+    $libp2p.addEventListener('peer:discovery', handlePeerDiscovery);
+    $libp2p.addEventListener('self:peer:update', handlePeerUpdate);
 
-        libp2p.services.pubsub.addEventListener('message', event => {
-            const topic = event.detail.topic
-            const message = toString(event.detail.data)
+    setInterval(() => {
+        if($libp2p){
+            const peerList = $libp2p.services.pubsub.getSubscribers(subscribeTopic).map(peerId => peerId.toString())
+            topicPeerList = peerList;
+        }
+    }, 1500)
 
-            if(!filterOutput)
-                outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
-            else if (topic!=='_peer-discovery._p2p._pubsub')
-                outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
-        })
+    $libp2p.services.pubsub.addEventListener('message', event => {
+        const topic = event.detail.topic
+        const message = toString(event.detail.data)
 
-        libp2p.addEventListener('self:peer:update', (evt) => {
-            console.log("self:peer:update",evt)
-            console.log(" libp2p.getMultiaddrs()", libp2p.getMultiaddrs())
-            const multiaddrs = libp2p.getMultiaddrs().map((ma) => ma.toString())
-            listeningAddressList = multiaddrs;
-        })
+        if(!filterOutput)
+            outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
+        else if (topic!=='_peer-discovery._p2p._pubsub')
+            outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
     })
 
-    /** Update connections list */
-    function updatePeerList () {
-        const peerList = libp2p.getPeers().map(peerId => peerId.toString())
-        peerConnectionsList = peerList
-        console.log("updatePeerList",peerConnectionsList)
-    }
 
-    /** dial remote peer */
-    const dialMultiaddrButton = async () => {
-        const ma = multiaddr(dialMultiaddr)
-        outputLogComp.appendOutput(`Dialing '${ma}'`)
-        await libp2p.dial(ma)
-        outputLogComp.appendOutput(`Connected to '${ma}'`)
-    }
+})
 
-    /** subscribe to pubsub topic */
-    const subscribeTopicButton = async () => {
-        outputLogComp.appendOutput(`Subscribing to '${clean(subscribeTopic)}'`)
-        const retVal = libp2p.services.pubsub.subscribe(subscribeTopic)
-        console.log("retVal",retVal)
-        sendTopicMessageInputDisabled = undefined
-        sendTopicMessageButtonDisabled = undefined
-    }
+/** dial remote peer */
+const dialMultiaddrButton = async () => {
+    const ma = multiaddr(dialMultiaddr)
+    outputLogComp.appendOutput(`Dialing '${ma}'`)
+    await $libp2p.dial(ma)
+    outputLogComp.appendOutput(`Connected to '${ma}'`)
+}
 
-    /** send message to topic */
-    const sendTopicMessageButton = async () => {
-        outputLogComp.appendOutput(`Sending message '${clean(sendTopicMessage)}'`)
-        await libp2p.services.pubsub.publish(subscribeTopic, fromString(sendTopicMessage))
-    }
+/** subscribe to pubsub topic */
+const subscribeTopicButton = async () => {
+    outputLogComp.appendOutput(`Subscribing to '${clean(subscribeTopic)}'`)
+    $libp2p.services.pubsub.subscribe(subscribeTopic)
+    sendTopicMessageInputDisabled = undefined
+    sendTopicMessageButtonDisabled = undefined
+}
+
+/** send message to topic */
+const sendTopicMessageButton = async () => {
+    outputLogComp.appendOutput(`Sending message '${clean(sendTopicMessage)}'`)
+    await $libp2p.services.pubsub.publish(subscribeTopic, fromString(sendTopicMessage))
+}
 </script>
 <Grid fullWidth>
     <Row>
@@ -134,12 +106,6 @@
         </Column>
         <Column>
             <ol>
-                <li>
-<!--                    <div use:clickToCopy>/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiD9nbBhAXN4rQqw8lNZF2ltpicsXzBSYrBaQ4SJu5JkOg/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM</div>-->
-<!--                    <br/>-->
-<!--                    <div use:clickToCopy>/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM</div>-->
-                <br/>
-                </li>
                 <li>Choose the relay's multiaddr (webrtc-direct / or webtransport) and hit "Dial Multiaddr" button (left side)</li>
                 <li>Wait for a WebRTC address to appear in the "Listening Addresses" area (right side)</li>
                 <li>Click "Open / Scan" in scan the QR-Code in your mobile phone or click on the multi address to copy it to clipboard for opening it in another borwser)</li>
@@ -180,7 +146,7 @@
 
         <TextInput labelText="PeerId" value={peerId} readonly id="dial-multiaddr-input"  placeholder="/ip4/127.0.0.1/tcp/1234/ws/p2p/123Foo"  size="sm" />
         <Select
-                disabled={listeningAddressList.length===0}
+                disabled={$listeningAddressList.length===0}
                 on:change={ (evt) =>  {
                         selectedListeningAddress = evt.target.options[evt.target.selectedIndex].value
                         console.log("selectedListeningAddress",selectedListeningAddress)
@@ -189,15 +155,15 @@
                 labelText="Listening Addresses"
                 size="sm">
                 <SelectItem value={"choose"} />
-                {#each listeningAddressList as a}
+                {#each $listeningAddressList as a}
                     <SelectItem value={a} />
                 {/each}
         </Select>
 
-            <Button disabled={listeningAddressList.length==0 || !selectedListeningAddress}
+            <Button disabled={$listeningAddressList.length==0 || !selectedListeningAddress}
                     on:click={() => { qrCodeOpen=(!qrCodeOpen) }} size="small">Open / Scan</Button>
                 <Select id="connectedPeers" labelText="Connected Peers" size="sm">
-                    {#each peerConnectionsList as c}
+                    {#each $peerConnectionsList as c}
                         <SelectItem value={c} />
                     {/each}
                 </Select>
