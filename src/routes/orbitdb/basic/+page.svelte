@@ -222,9 +222,9 @@
         <Column class="distance">Multi Addresses Received:</Column>
         <Column class="distance">
             {#if listeningAddressList.length>0}
-                {listeningAddressList.length} <WatsonHealthAiStatusComplete  class="statusGreen"/>
+                {listeningAddressList.length}<WatsonHealthAiStatusComplete  class="statusGreen"/>
             {:else}
-                {listeningAddressList.length}  <WatsonHealthAiStatus class="statusRead" />
+                {listeningAddressList.length}<WatsonHealthAiStatus class="statusRead" />
             {/if}
         </Column>
     </Row>

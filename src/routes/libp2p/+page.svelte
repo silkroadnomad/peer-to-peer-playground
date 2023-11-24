@@ -39,11 +39,11 @@ $:qrCodeData = `${window.location.origin}/${window.location.hash}?dial=${encodeU
 $: {
     if($query!==undefined && $query.split("=")[0]==='dial') {
         const textpart = $query.split("certhash")[0].substring(5) //cut away dial=
-        dialMultiaddrItems.push({id:$query.split("=")[1],text:textpart})
-        dialMultiaddr=dialMultiaddrItems[dialMultiaddrItems.length-1].id //preselect the last added
+        const id = $query.split("=")[1]
+        addToDialItems(id,textpart)
     }
 }
-
+//update localStorage in case those variable get changed
 $: localStorage.setItem("dialMultiaddr",dialMultiaddr)
 $: localStorage.setItem("subscribeTopic",subscribeTopic)
 const clean = (line) => line.replaceAll('\n', '')
@@ -75,6 +75,12 @@ onMount(async ()=>{
 
 
 })
+
+const addToDialItems = (id,text) => {
+    dialMultiaddrItems.push({id,text})
+    console.log("dialMultiaddrItems",dialMultiaddrItems)
+    dialMultiaddr=dialMultiaddrItems[dialMultiaddrItems.length-1].id //preselect the last added
+}
 
 /** dial remote peer */
 const dialMultiaddrButton = async () => {
@@ -113,15 +119,11 @@ const sendTopicMessageButton = async () => {
                 <li>Subscribe both windows to the same topic</li>
                 <li>Send messages between the windows using the "PubSub" section</li>
             </ol>
-
-            Remark:
-            <ol>
-                <li>for some reason this doesn't work with a Kubo - only with a local relay. With Kubo you must first both connect to the Kubo address and then one can dial the others address and start pubsub! </li>
-                <li>
-                    If you now open your mobile browser and do the same you will notice - it doesn't work. I need "normal" WebRTC to connect here!? Or could a webrtc-direct between to browsers without relay work too?
-                </li>
-            </ol>
-
+            <p>&nbsp;</p>
+            Remark / Question: With the 'old' WebRTC-Star nodes it was possible to just connect to one of those WebRTC-stars without knowing a peers MultiAddress.
+            PubSub was automatically possible to both connected peers. Now it seems, we need to somewhat inform another browser about one relayed MultiAddress so he can connect?!
+            I'd like to find a possibility to publish all connected browser peers MultiAddresses somewhere. (What about IPNS?)
+            Or can I still publish MultiAddresses through the ipfs network on a certain protocol prefix so everybody else could receive it automatically and connect to each other?
         </Column>
     </Row>
     <Row>
@@ -133,6 +135,11 @@ const sendTopicMessageButton = async () => {
         <Column>
             <h2>Node</h2>
             <ComboBox
+                    on:keydown={ (evt) => {
+                             if (evt.keyCode !== 13) return
+                             console.log("evt",evt.target.value)
+                            addToDialItems(evt.target.value,evt.target.value)
+                    }}
                     bind:selectedId={dialMultiaddr}
                     id="dial-multiaddr-input"
                     placeholder="/ip4/127.0.0.1/tcp/1234/ws/p2p/123Foo"
@@ -185,7 +192,13 @@ const sendTopicMessageButton = async () => {
 </Row>
 <Row>
     <Column>
-        <TextInput labelText="Send Message to Topic" bind:value={sendTopicMessage} type="text" id="send-topic-message-input" placeholder="hello world" disabled={sendTopicMessageInputDisabled}     size="sm" />
+        <TextInput labelText="Send Message to Topic" bind:value={sendTopicMessage}
+                   type="text" id="send-topic-message-input" placeholder="hello world"
+                   on:keydown={(evt) => {
+                       console.log("test")
+                       if (evt.keyCode === 13) sendTopicMessageButton()
+                   }}
+                   disabled={sendTopicMessageInputDisabled} size="sm" />
         <Button on:click={sendTopicMessageButton} id="send-topic-message-button" disabled={sendTopicMessageButtonDisabled} size="small">Send</Button>
     </Column>
         <Column>

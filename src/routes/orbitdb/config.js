@@ -10,6 +10,8 @@ import {pubsubPeerDiscovery} from "@libp2p/pubsub-peer-discovery";
 import {identifyService} from "libp2p/identify";
 import {autoNATService} from "libp2p/autonat";
 import {gossipsub} from "@chainsafe/libp2p-gossipsub";
+import {dcutrService} from "libp2p/dcutr";
+import {kadDHT} from "@libp2p/kad-dht";
 
 export const config = {
     addresses: {
@@ -46,6 +48,14 @@ export const config = {
     services: {
         identify: identifyService(),
         autoNAT: autoNATService(),
-        pubsub: gossipsub({allowPublishToZeroPeers: true, canRelayMessage: true})
+     //   pubsub: gossipsub({allowPublishToZeroPeers: true, canRelayMessage: true}),
+        dcutr: dcutrService(),
+        pubsub: gossipsub({allowPublishToZeroPeers: true, canRelayMessage: true}),
+        dht: kadDHT({
+            protocolPrefix: "/svelte-pubsub",
+            maxInboundStreams: 5000,
+            maxOutboundStreams: 5000,
+            clientMode: true,
+        }),
     }
 }

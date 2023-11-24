@@ -42,7 +42,6 @@ export const config = {
         webRTCDirect(),
         webTransport(),
         circuitRelayTransport({discoverRelays: 1}),
-        // dcutrService(),
         // circuitRelayServer({
         //         advertise: true
         // }),
@@ -68,6 +67,13 @@ export const config = {
         }),
         identify: identifyService(),
         autoNAT: autoNATService(),
-        pubsub: gossipsub({allowPublishToZeroPeers: true, canRelayMessage: true})
+        dcutr: dcutrService(),
+        pubsub: gossipsub({allowPublishToZeroPeers: true, canRelayMessage: true}),
+        dht: kadDHT({
+            protocolPrefix: "/svelte-pubsub",
+            maxInboundStreams: 5000,
+            maxOutboundStreams: 5000,
+            clientMode: true,
+        }),
     }
 }
