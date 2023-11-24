@@ -26,7 +26,6 @@
     let sendTopicMessageInputDisabled = false
     let sendTopicMessageButtonDisabled = false
     let sendTopicMessage
-    let output = ''
     let listeningAddressList = []
     let peerConnectionsList = []
 
@@ -161,7 +160,7 @@
     </Row>
     <Row>
         <Column>
-            <QRCodeModal bind:qrCodeOpen={qrCodeOpen} on:close={qrCodeOpen=false} qrCodeData={qrCodeData} />
+            <QRCodeModal bind:qrCodeOpen={qrCodeOpen} on:close={()=>qrCodeOpen=false} qrCodeData={qrCodeData} />
         </Column>
     </Row>
     <Row>
