@@ -12,8 +12,10 @@
     <Row>
         <Column>
             <h2>Connected Helia Counter</h2>
-            <p>This counter store it's value inside the browsers Helia node as before.
-                But the value should be readable by the rest of the IPFS network since we connect to a ipfs node (Kubo) via webrtc-direct / webtransport.
+            <p> This counter stores it's value inside the browsers Helia node as before.
+                The value should be readable by the rest of the IPFS network (but isn't per se as it seems)
+                The relay (Kubo) which can find the CID when doing ``ipfs cat`` on the command line.
+                Unfortunately, so far another ipfs node can not find the cid and download it via our Kubo.
             </p>
         </Column>
         <Column>

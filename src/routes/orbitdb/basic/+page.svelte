@@ -58,6 +58,21 @@
 
     const connect2DB = async (_address2Connect) => {
         db = await orbitdb.open(_address2Connect)
+
+
+        db.events.on('join', async (peerId, heads) => {
+            console.log("join",peerId)
+        })
+
+// Listen for any updates to db2. This is especially useful when listening for
+// new heads that are available on db1.
+// If we want to listen for new data on db2, add an "update" listener to db1.
+        db.events.on('update', async (entry) => {
+            console.log("update",entry)
+            // Full replication is achieved by explicitly retrieving all records from db1.
+            console.log(await db.all())
+            // db2Updated = true
+        })
         address = db.address
         console.log("db address now",address)
         await countDataInDB()
@@ -100,7 +115,7 @@
         libp2p.addEventListener("peer:discovery", (evt) => {
             console.log("peer:discovery",evt.detail.id.toString())
         });
-        libp2p.services.pubsub.addEventListener('subscription-change', event => console.log("event",event))
+        libp2p.services.pubsub.addEventListener('subscription-change', event => console.log("subscription-change",event))
         libp2p.services.pubsub.addEventListener('subscription-change', event => {
             // const topic = event.detail.topic
             // const message = toString(event.detail.data)
@@ -108,6 +123,7 @@
             outputLogComp.appendOutput(`subscription-change`)
         
         })
+
         libp2p.services.pubsub.addEventListener('message', event => {
             const topic = event.detail.topic
             const message = toString(event.detail.data)
@@ -115,6 +131,7 @@
             // if(!filterOutput)
             //     appendOutput(`Message received on topic '${topic}': ${message}`)
             // else if (topic!=='_peer-discovery._p2p._pubsub')
+            console.log(`Message received on topic '${topic}': ${message}`)
             outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
         })
 
