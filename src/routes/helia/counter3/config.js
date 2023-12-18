@@ -12,10 +12,10 @@ import {identifyService} from "libp2p/identify";
 import {autoNATService} from "libp2p/autonat";
 import {gossipsub} from "@chainsafe/libp2p-gossipsub";
 
-const multiaddrs = [ //add your own WebRTC Stars Servers here too!
-    "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiBcDqgg_PQNURYgEM7UG2xuWSy-cXyvFiWp1EMDuS0gug/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM",
-    "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiDeKwbKVMTtb6W4ehAZNnMoU6ar5tcrM7kJENlWx9jh_w/certhash/uEiAP75UYHU9lxxeQ43_u3U7PrL3eeb0aOBfw2ty7CjuSUA/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM",
-];
+const multiaddrs =  [
+    { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiA-NREGwkQ1xVlO6YkoH30R9aH-4dcQfTz-x0jJPhHRjg/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct" },
+    { id: "/ip4/159.69.119.82/udp/4005/quic-v1/webtransport/certhash/uEiAP75UYHU9lxxeQ43_u3U7PrL3eeb0aOBfw2ty7CjuSUA/certhash/uEiBhciKTRyUiuDHnFkpOD_i3bMRCuGT8olXrdFvteNV-uA/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4005/quic-v1/webtransport/"}
+]
 const bootstrapConfig = {list: multiaddrs};
 
 export const config = {

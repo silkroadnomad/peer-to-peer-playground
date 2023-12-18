@@ -42,7 +42,7 @@ export const config = {
         }
     },
     peerDiscovery: [
-        bootstrap(bootstrapConfig),
+       // bootstrap(bootstrapConfig),
         pubsubPeerDiscovery()
     ],
     services: {
