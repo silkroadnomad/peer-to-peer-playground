@@ -95,11 +95,11 @@
     }
     //selectedListeningAddress appears as soon as we got our multiaddress from kubo (relay) in this case we choose the address which we connected with
     $:{
-        console.log("looking for webtransport multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webtransport')))
-        console.log("looking for webrtc-direct multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct')))
+        console.log("looking for webtransport multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webtransport')!==-1))
+        console.log("looking for webrtc-direct multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct')!==-1))
         if(transportToggleWebtransport)
-            selectedListeningAddress=listeningAddressList.find(addr=>addr.indexOf('/webtransport'))
-        else selectedListeningAddress=listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct'))
+            selectedListeningAddress=listeningAddressList.find(addr=>addr.indexOf('/webtransport')!==-1)
+        else selectedListeningAddress=listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct')!==-1)
 
         console.log("--->selectedListeningAddress now:",selectedListeningAddress)
     }
