@@ -42,13 +42,12 @@ export const config = {
         }
     },
     peerDiscovery: [
-        // bootstrap(bootstrapConfig),
+        bootstrap(bootstrapConfig),
         pubsubPeerDiscovery()
     ],
     services: {
         identify: identifyService(),
         autoNAT: autoNATService(),
-     //   pubsub: gossipsub({allowPublishToZeroPeers: true, canRelayMessage: true}),
         dcutr: dcutrService(),
         pubsub: gossipsub({allowPublishToZeroPeers: true, canRelayMessage: true}),
         dht: kadDHT({

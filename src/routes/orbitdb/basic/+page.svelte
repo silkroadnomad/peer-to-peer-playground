@@ -45,9 +45,11 @@
     let selectedListeningAddress;
 
     const relaysMultiAddrs =  [
-        { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiBcDqgg_PQNURYgEM7UG2xuWSy-cXyvFiWp1EMDuS0gug/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
-        { id: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM",
-            text: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport" }
+        { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiA-NREGwkQ1xVlO6YkoH30R9aH-4dcQfTz-x0jJPhHRjg/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct" },
+        { id: "/ip4/159.69.119.82/udp/4005/quic-v1/webtransport/certhash/uEiAP75UYHU9lxxeQ43_u3U7PrL3eeb0aOBfw2ty7CjuSUA/certhash/uEiBhciKTRyUiuDHnFkpOD_i3bMRCuGT8olXrdFvteNV-uA/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4005/quic-v1/webtransport/"}
+      //  { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiBcDqgg_PQNURYgEM7UG2xuWSy-cXyvFiWp1EMDuS0gug/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
+      //  { id: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAfc5WqLyw25HzgFs8OaMJ_gCqzX7S1a9BlnES5Qq5QHg/certhash/uEiAiA85j55j1DxtLpibTJsk8A_hXKCCFrd1n4ceEjxC6Sw/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM",
+      //       text: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport" }
     ]
 
     let  multiAddress2Connect =  localStorage.getItem("multiAddres2Connect")?localStorage.getItem("multiAddres2Connect"):(isFirefox?relaysMultiAddrs[0].id:relaysMultiAddrs[1].id)
@@ -96,7 +98,9 @@
     }
     //selectedListeningAddress appears as soon as we got our multiaddress from kubo (relay) in this case we choose the address which we connected with
     $:{
-        selectedListeningAddress=transportToggleWebtransport?listeningAddressList.find(addr=>addr.indexOf('/webtransport')!==-1):listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct')!==-1)
+        console.log("looking for webtransport multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webtransport')))
+        console.log("looking for webrtc-direct multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct')))
+        selectedListeningAddress=transportToggleWebtransport?listeningAddressList.find(addr=>addr.indexOf('/webtransport')):listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct'))
         console.log("--->selectedListeningAddress now:",selectedListeningAddress)
     }
     //qrCodeData creates an url with db (dbaddress) and dial (multiaddr) param
