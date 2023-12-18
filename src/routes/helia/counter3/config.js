@@ -39,7 +39,7 @@ export const config = {
 
     streamMuxers: [
         yamux(),
-        mplex()
+        // mplex() disabled unreliable by design
     ],
     connectionGater: {
         denyDialMultiaddr: () => {

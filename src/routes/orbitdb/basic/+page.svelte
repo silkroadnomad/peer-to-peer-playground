@@ -18,7 +18,7 @@
     import QRCodeModal from "$lib/components/QRCodeModal.svelte";
     import {query} from "../../router.js";
     const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
-    import Snow from "../Snow.svelte";
+    // import Snow from "../Snow.svelte";
 
     /** @type {import("libp2p").Libp2p} */
     let libp2p;
@@ -121,7 +121,7 @@
             // const topic = event.detail.topic
             // const message = toString(event.detail.data)
             console.log("event",event)
-            outputLogComp.appendOutput(`subscription-change`)
+            outputLogComp?.appendOutput(`subscription-change`)
         
         })
 
@@ -133,7 +133,7 @@
             //     appendOutput(`Message received on topic '${topic}': ${message}`)
             // else if (topic!=='_peer-discovery._p2p._pubsub')
             console.log(`Message received on topic '${topic}': ${message}`)
-            outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
+            outputLogComp?.appendOutput(`Message received on topic '${topic}': ${message}`)
         })
 
         libp2p.addEventListener('self:peer:update', (evt) => {
@@ -142,7 +142,7 @@
             const multiaddrs = libp2p.getMultiaddrs().map((ma) => ma.toString())
             console.log("multiaddrs",multiaddrs)
             if(multiaddrs.length>0){
-                outputLogComp.appendOutput(`multiaddrs found '${multiaddrs}' now connecting to db ${address2Connect}`)
+                outputLogComp?.appendOutput(`multiaddrs found '${multiaddrs}' now connecting to db ${address2Connect}`)
                 connect2DB(address2Connect)
             }
             listeningAddressList = multiaddrs;
@@ -160,7 +160,7 @@
 
         orbitdb = await createOrbitDB({ ipfs: helia, id: 'user1', directory: './orbitdb' })
         if(!$query){
-            outputLogComp.appendOutput("query not given - doing default connect")
+            outputLogComp?.appendOutput("query not given - doing default connect")
             connect2DB(address2Connect)
         }
 
@@ -177,16 +177,17 @@
     function updatePeerList () {
         const peerList = libp2p.getPeers().map(peerId => peerId.toString())
         peerConnectionsList = peerList
-        outputLogComp.appendOutput(`gathered peerConnectionsList from ${peerConnectionsList}`)
+        outputLogComp?.appendOutput(`gathered peerConnectionsList from ${peerConnectionsList}`)
         console.log("updatePeerList",peerConnectionsList)
     }
     const connectKuboRelay = async () => {
         relayConnected = false
+        listeningAddressList = []
         const ma = multiaddr(multiAddress2Connect)
-        outputLogComp.appendOutput(`Dialing '${ma}'`)
+        outputLogComp?.appendOutput(`Dialing '${ma}'`)
         await libp2p.dial(ma)
         relayConnected = true
-        outputLogComp.appendOutput(`Connected to '${ma}'`)
+        outputLogComp?.appendOutput(`Connected to '${ma}'`)
         localStorage.setItem("multiAddress2Connect",multiAddress2Connect)
     }
 
@@ -195,7 +196,7 @@
         for await (const record of db2.iterator()) {
             console.log("read record",record)
             count++
-            outputLogComp.appendOutput(`counted ${count} records`)
+            outputLogComp?.appendOutput(`counted ${count} records`)
         }
     }
 </script>
@@ -223,7 +224,7 @@
         <Column class="distance">Relay connected:</Column>
         <Column>
             <Toggle labelText={transportToggleWebtransport?'Connect to Relay via WebTransport':'Connect to Relay via WebRTC-Direct'}
-                    toggled={transportToggleWebtransport} on:change={()=>{
+                    toggled={transportToggleWebtransport} on:change={() => {
                         transportToggleWebtransport=(!transportToggleWebtransport)
                         connectKuboRelay()
                     }} />
@@ -245,6 +246,11 @@
                 {listeningAddressList.length}<WatsonHealthAiStatus class="statusRead" />
             {/if}
         </Column>
+        <Column>
+            {#each listeningAddressList as a}
+                <li>{a}</li>
+            {/each}
+        </Column>
     </Row>
     <Row>
         <Column class="distance">
@@ -253,14 +259,14 @@
                 for (let i = count; i < amount; i++) {
                     await db.add('hello' + i)
                     count++
-                    outputLogComp.appendOutput(`added ${i} record`)
+                    outputLogComp?.appendOutput(`added ${i} record`)
                 }
             }}>Write 10 records to OrbitDB</Button>
         </Column>
         <Column class="distance">
             <Button size="small" on:click={async () => {
                 db.drop()
-                outputLogComp.appendOutput(`db ${address} dropped`)
+                outputLogComp?.appendOutput(`db ${address} dropped`)
             }}>Drop db</Button>
         </Column>
     </Row>

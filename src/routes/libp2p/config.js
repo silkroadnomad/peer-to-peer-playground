@@ -6,7 +6,7 @@ import { bootstrap } from '@libp2p/bootstrap'
 import {circuitRelayTransport,circuitRelayServer} from "libp2p/circuit-relay";
 import {noise} from "@chainsafe/libp2p-noise";
 import {yamux} from "@chainsafe/libp2p-yamux";
-import {mplex} from "@libp2p/mplex";
+// import {mplex} from "@libp2p/mplex";
 import {pubsubPeerDiscovery} from "@libp2p/pubsub-peer-discovery";
 import {identifyService} from "libp2p/identify";
 import {autoNATService} from "libp2p/autonat";
@@ -50,7 +50,10 @@ export const config = {
     transportManager: {
         faultTolerance: FaultTolerance.NO_FATAL
     },
-    streamMuxers: [yamux(),mplex()],
+    streamMuxers: [
+        yamux(),
+        // /**/mplex()
+    ],
     connectionGater: {
         denyDialMultiaddr: () => {
             return false
