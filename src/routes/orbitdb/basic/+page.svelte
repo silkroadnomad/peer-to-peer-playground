@@ -97,7 +97,10 @@
     $:{
         console.log("looking for webtransport multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webtransport')))
         console.log("looking for webrtc-direct multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct')))
-        selectedListeningAddress=transportToggleWebtransport?listeningAddressList.find(addr=>addr.indexOf('/webtransport')):listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct'))
+        if(transportToggleWebtransport)
+            selectedListeningAddress=listeningAddressList.find(addr=>addr.indexOf('/webtransport'))
+        else selectedListeningAddress=listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct'))
+
         console.log("--->selectedListeningAddress now:",selectedListeningAddress)
     }
     //qrCodeData creates an url with db (dbaddress) and dial (multiaddr) param
