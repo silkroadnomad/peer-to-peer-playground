@@ -9,7 +9,8 @@ import {
     Select,
     SelectItem,
     ComboBox,
-    Checkbox
+    Checkbox,
+    Toggle
 } from "carbon-components-svelte";
 
 import { createLibp2p } from 'libp2p';
@@ -25,6 +26,7 @@ import QRCodeModal from '../../lib/components/QRCodeModal.svelte';
 let peerId
 let dialMultiaddr = localStorage.getItem("dialMultiaddr") || ''
 let subscribeTopic  = localStorage.getItem("subscribeTopic") || ''
+let autodial = localStorage.getItem("autodial") && localStorage.getItem("autodial")==='true' || false
 let topicPeerList = []
 let sendTopicMessageInputDisabled = false
 let sendTopicMessageButtonDisabled = false
@@ -43,9 +45,12 @@ $: {
         addToDialItems(id,textpart)
     }
 }
-//update localStorage in case those variable get changed
+
 $: localStorage.setItem("dialMultiaddr",dialMultiaddr)
 $: localStorage.setItem("subscribeTopic",subscribeTopic)
+$: localStorage.setItem("autodial",autodial.toString())
+
+
 const clean = (line) => line.replaceAll('\n', '')
 
 onMount(async ()=>{
@@ -73,7 +78,9 @@ onMount(async ()=>{
             outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
     })
 
-
+    if(autodial){
+        dialMultiaddrButton()
+    }
 })
 
 const addToDialItems = (id,text) => {
@@ -113,9 +120,9 @@ const sendTopicMessageButton = async () => {
         <Column>
             <ol>
                 <li>Choose the relay's multiaddr (webrtc-direct / or webtransport) and hit "Dial Multiaddr" button (left side)</li>
-                <li>Wait for a WebRTC address to appear in the "Listening Addresses" area (right side)</li>
+                <li>Wait for a p2p-circuit/p2p/ address to appear in the "Listening Addresses" area (right side)</li>
                 <li>Click "Open / Scan" in scan the QR-Code in your mobile phone or click on the multi address to copy it to clipboard for opening it in another borwser)</li>
-                <li>Use the "Dial Multiaddr" section in the second window to dial the choosen multi address from the first browser</li>
+                <li>Use the "Dial Multiaddr" section in the second window to dial the chosen multi address from the first browser</li>
                 <li>Subscribe both windows to the same topic</li>
                 <li>Send messages between the windows using the "PubSub" section</li>
             </ol>
@@ -136,9 +143,8 @@ const sendTopicMessageButton = async () => {
             <h2>Node</h2>
             <ComboBox
                     on:keydown={ (evt) => {
-                             if (evt.keyCode !== 13) return
-                             console.log("evt",evt.target.value)
-                            addToDialItems(evt.target.value,evt.target.value)
+                                if (evt.keyCode !== 13) return
+                                addToDialItems(evt.target.value,evt.target.value)
                     }}
                     bind:selectedId={dialMultiaddr}
                     id="dial-multiaddr-input"
@@ -147,7 +153,12 @@ const sendTopicMessageButton = async () => {
                     items={dialMultiaddrItems}
                     size="sm"
             />
-            <Button on:click={dialMultiaddrButton} id="dial-multiaddr-button" size="small">Dial / Connect</Button>
+            <div>
+                <Button on:click={dialMultiaddrButton} id="dial-multiaddr-button" size="small">Dial / Connect</Button>
+                <Toggle labelText={'AutoDial'}
+                        toggled={autodial}
+                        on:change={() => autodial = !autodial} />
+            </div>
         </Column>
         <Column>
 
