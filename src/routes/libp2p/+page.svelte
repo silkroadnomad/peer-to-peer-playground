@@ -94,7 +94,7 @@ $:{ //if a dialUrl appears call relay automatically
 $:{ //as soon as there are listening MA's we connect to the other peer - pubsub topic seems to subscribe automatically
     if(dialUrl && $libp2p && outputLogComp  && $listeningAddressList.length>0) {
         dialMultiaddr=dialMultiaddrItems[dialMultiaddrItems.length-1].id //preselect the last added (which is the browser peer)
-        outputLogComp.appendOutput(`setting püeer dialMultiaddr to ${dialMultiaddr}`)
+        outputLogComp.appendOutput(`setting peer dialMultiaddr to ${dialMultiaddr}`)
         dialMultiaddrButton() //connect to peer
     }
 }
