@@ -36,6 +36,7 @@ let selectedListeningAddress
 let filterOutput
 let outputLogComp
 let qrCodeData
+let dialUrl
 
 $:qrCodeData = `${window.location.origin}/${window.location.hash}?dial=${encodeURI(selectedListeningAddress)}`
 $: {
@@ -43,6 +44,7 @@ $: {
         const textpart = $query.split("certhash")[0].substring(5) //cut away dial=
         const id = $query.split("=")[1]
         addToDialItems(id,textpart)
+        dialUrl = true
     }
 }
 
@@ -78,10 +80,24 @@ onMount(async ()=>{
             outputLogComp.appendOutput(`Message received on topic '${topic}': ${message}`)
     })
 
-    if(autodial){
-        dialMultiaddrButton()
-    }
+    if(autodial) await dialMultiaddrButton() //connects to the selected MA which is the last one
 })
+$:{ //if a dialUrl appears call relay automatically
+    if(dialUrl && $libp2p && outputLogComp && $listeningAddressList.length===0) {
+        console.log("dialing relay")
+        dialMultiaddr = dialMultiaddrItems[1].id //preselect the second last added
+        outputLogComp.appendOutput(`setting relay dialMultiaddr to '${dialMultiaddr}'`)
+        dialMultiaddrButton() //connect to a relay
+    }
+}
+
+$:{ //as soon as there are listening MA's we connect to the other peer - pubsub topic seems to subscribe automatically
+    if(dialUrl && $libp2p && outputLogComp  && $listeningAddressList.length>0) {
+        dialMultiaddr=dialMultiaddrItems[dialMultiaddrItems.length-1].id //preselect the last added (which is the browser peer)
+        outputLogComp.appendOutput(`setting püeer dialMultiaddr to ${dialMultiaddr}`)
+        dialMultiaddrButton() //connect to peer
+    }
+}
 
 const addToDialItems = (id,text) => {
     dialMultiaddrItems.push({id,text})
@@ -122,6 +138,7 @@ const sendTopicMessageButton = async () => {
                 <li>Choose the relay's multiaddr (webrtc-direct / or webtransport) and hit "Dial Multiaddr" button (left side)</li>
                 <li>Wait for a p2p-circuit/p2p/ address to appear in the "Listening Addresses" area (right side)</li>
                 <li>Click "Open / Scan" in scan the QR-Code in your mobile phone or click on the multi address to copy it to clipboard for opening it in another borwser)</li>
+                <li>As another browser was opened by a QR-Code or URL with multi-address, the second browser should autodial the first connection to the relay node. (here a Kubo via webrtc-direct/webtransport)</li>
                 <li>Use the "Dial Multiaddr" section in the second window to dial the chosen multi address from the first browser</li>
                 <li>Subscribe both windows to the same topic</li>
                 <li>Send messages between the windows using the "PubSub" section</li>
