@@ -1,129 +1,61 @@
 <script>
-    import { createHelia } from 'helia';
-    import {
-        createOrbitDB,
-        KeyValue,
-        KeyStore,
-        Identities,
-        OrbitDBAccessController
-    } from '@orbitdb/core'
-    import { onMount } from 'svelte';
-    import { identifyService } from 'libp2p/identify';
-    import { autoNATService } from 'libp2p/autonat';
-    import { gossipsub } from '@chainsafe/libp2p-gossipsub';
-    /** helia IPFS node instance (could be held in a Svelte store) */
-    let helia;
-    let orbitdb;
-    let db,dbReopened;
-    let accessController
-    let identities
-    let testIdentity1
+    import {onMount} from "svelte";
+    import { createLibp2p } from 'libp2p'
+    import { createHelia } from 'helia'
+    import {createOrbitDB, DefaultLibp2pOptions, Identities, KeyStore} from '@orbitdb/core'
+    import {DefaultLibp2pBrowserOptions} from "@orbitdb/core/src/config/libp2p/index.js";
 
-    /** last hash which holds the current count */
-    let hash = '';
-    /** current count according the data in IPFS network */
-    let count = 0;
-    const config = {
-        libp2p: {
-            services: {
-                identify: identifyService(),
-                autoNAT: autoNATService(),
-                pubsub: gossipsub({
-                    allowPublishToZeroPeers: true,
-                    emitSelf: true,
-                    canRelayMessage: true
-                }),
+    import { LevelBlockstore } from "blockstore-level"
+    import { LevelDatastore } from "datastore-level";
+
+
+    let blockstore = new LevelBlockstore("./helia-blocks")
+    let datastore = new LevelDatastore("./helia-data")
+    onMount(async ()=>{
+        // Create an IPFS instance with defaults.
+        console.log("mount")
+
+        const libp2p = await createLibp2p({ ...DefaultLibp2pBrowserOptions})
+        console.log("libp2p",libp2p)
+
+
+        const ipfs =  await createHelia({
+            libp2p,
+            blockstore,
+            datastore
+        });
+        const keysPath = './testkeys'
+        let keystore = await KeyStore({ path: keysPath })
+        let identities = await Identities({ keystore })
+        let testIdentity1 = await identities.createIdentity({ id: 'userA' })
+
+        const accessController = {
+            canAppend: async (entry) => {
+                console.log("canAppend",entry)
+                const identity = await identities.getIdentity(entry.identity)
+                return identity.id === testIdentity1.id
             }
         }
-    };
+        const orbitdb = await createOrbitDB({ ipfs,identity:testIdentity1,identities})
+ //,accessController,identity: testIdentity1
+        const db = await orbitdb.open('/orbitdb/zdpuB28iZwkKbZUGdTWC8y1DJRczUAig3PEwXxeE2jSkd44XC',{sync:true, accessController})
 
-    /**
-     * As the button component mounts we spin up an IFPS-node
-     * inside the browser which is by default connecting
-     * the the public helia network via WebRTC.
-     * then we load the last count our Helia (IPFS) node.
-     */
-    onMount(async () => {
-        helia = await createHelia(config);
-        console.log("helia",helia)
-        orbitdb = await createOrbitDB({ ipfs:helia })
-        console.log("orbitDB",orbitdb)
-        const dbPath1 = './orbitdb/tests/orbitdb-access-controller/1'
-        // keystore = await KeyStore({ path: keysPath })
-        const keystore1 = await KeyStore({ path: dbPath1 + '/keys' })
+        console.log('my-db address', db.address)
 
-        identities = await Identities({ ipfs: helia, keystore: keystore1 })
+        // Add some records to the db.
+        await db.add('hello world 1')
+        await db.add('hello world 2')
 
-        testIdentity1 = await identities.createIdentity({ id: 'userA' })
-        accessController = await OrbitDBAccessController()({ orbitdb, identities: testIdentity1 })
-        const dbAddress = "counter"
-        db = await KeyValue()({ ipfs:helia, identity: testIdentity1, address: dbAddress, accessController })
-        // const dbAddress = "counter" //"/orbitdb/zdpuB3G8YAcRyZ1XJ9PvinWHY5Q7bot9VZipRjnLegbBBEecp" //"counter"
-        // db = await orbitdb.open(dbAddress, {
-        //     type: 'keyvalue',
-        //     sync: true,
-        //     indexBy: 'id',
-        //     create: true,
-        //     //overwrite: false,
-        //     public: true,
-        //     AccessController: IPFSAccessController({write: ['*']})
-        // })
+        // Print out the above records.
+        console.log(await db.all())
 
-        console.log("db",db)
-        console.log("db.address",db.address) ///orbitdb/zdpuAkhD7DDk4yZHLU5FtZXbDiAGNbfbP7eGexB76du2euLFv
-        const address2Reopen = db.address
-        console.log("address2Reopen","/orbitdb/zdpuAkhD7DDk4yZHLU5FtZXbDiAGNbfbP7eGexB76du2euLFv"/**/)
-       // await db.close()
-        dbReopened = await orbitdb.open(address2Reopen,{type:'keyvalue'})
-        console.log("dbReopened",dbReopened)
-        console.log("dbReopened.address",dbReopened.address)
-        const all = await dbReopened.all()
-        console.log("all",all)
+        // Close your db and stop OrbitDB and IPFS.
+        await db.close()
+        await orbitdb.stop()
+        await ipfs.stop()
+    })
 
 
-        // if(!count){
-        await dbReopened.put('count', 1)
-        count = await dbReopened.get('count')
-        // }
-        let all2 = await dbReopened.all()
-        count = await dbReopened.get('count')
-        console.log("count",count)
 
 
-        console.log("count from db", count)
-    });
-
-    /**
-     * Increments count and stores it back to IPFS.
-     */
-    const increment = async () => {
-        // const dbReopened = await orbitdb.open(address2Reopen,{type:'keyvalue'})
-
-        console.log("dbReopened",dbReopened)
-        // Add an entry
-        const all = await dbReopened.all()
-        console.log("all",all)
-
-        hash = await dbReopened .put('count', ++count)
-        // hash = await db.add(1)
-        console.log(hash)
-    }
 </script>
-
-<button on:click={increment}>
-    OrbitDB-Counter: {count}
-</button>
-dbAdress: {db?db.address:''}
-{#if hash}
-    <div>
-        <a href={`https://ipfs.io/ipfs/${hash}`}
-           target="_blank">stored at cid: {hash}</a>
-    </div>
-{/if}
-
-<style>
-    button {
-        background: cornflowerblue;
-        color: black;
-    }
-</style>

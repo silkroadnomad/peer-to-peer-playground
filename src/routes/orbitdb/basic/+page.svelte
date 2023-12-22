@@ -1,24 +1,21 @@
 <script>
-    import {Button, Column, Grid, Row, TextArea, Toggle} from "carbon-components-svelte";
+    import {Button, Column, Grid, Row} from "carbon-components-svelte";
     import {onMount} from "svelte";
-
     import WatsonHealthAiStatus from "carbon-icons-svelte/lib/WatsonHealthAiStatus.svelte";
     import WatsonHealthAiStatusComplete from "carbon-icons-svelte/lib/WatsonHealthAiStatusComplete.svelte";
-
+    import { multiaddr } from '@multiformats/multiaddr'
     import { createHelia } from 'helia';
-    import { createOrbitDB} from '@orbitdb/core';
-    import { LevelBlockstore } from "blockstore-level"
-    import { LevelDatastore } from "datastore-level";
-    import {createLibp2p} from "libp2p";
-    import {config} from "../../libp2p/config.js";
-    import {multiaddr} from "@multiformats/multiaddr";
-    import {toString} from "uint8arrays";
+    import {createOrbitDB, KeyStore, Identities, IPFSAccessController} from '@orbitdb/core';
+    import { createLibp2p } from "libp2p";
+    import { LevelBlockstore } from 'blockstore-level'
+    import { LevelDatastore } from 'datastore-level'
+
+    import { toString } from "uint8arrays";
 
     import OutputLog from "$lib/components/OutputLog.svelte";
     import QRCodeModal from "$lib/components/QRCodeModal.svelte";
-    import {query} from "../../router.js";
-    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
-    // import Snow from "../Snow.svelte";
+    import { query } from "../../router.js";
+    import {DefaultLibp2pBrowserOptions} from "./config.js";
 
     /** @type {import("libp2p").Libp2p} */
     let libp2p;
@@ -30,7 +27,11 @@
     let db;
     /** @type {string} */
     let address;
-    let relayConnected = false
+    let identities
+    let keystore
+    let testIdentity1
+    let accessController
+    let relayConnected,peerConnected
 
     let count = 0
     let peerConnectionsList = []
@@ -41,78 +42,79 @@
     let outputLogComp
     let qrCodeOpen;
     let qrCodeData;
-    let address2Connect = 'helloWorld'
-    let selectedListeningAddress;
-
-    const relaysMultiAddrs =  [
-        { id: "/ip4/159.69.119.82/udp/4002/webrtc-direct/certhash/uEiDssdIa9CW8vSKdXEUqzWuSB9PY3kpciW0O9Ze7sjbapA/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
-        { id: "/ip4/159.69.119.82/udp/4004/quic-v1/webtransport/certhash/uEiAP75UYHU9lxxeQ43_u3U7PrL3eeb0aOBfw2ty7CjuSUA/certhash/uEiBhciKTRyUiuDHnFkpOD_i3bMRCuGT8olXrdFvteNV-uA/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4005/quic-v1/webtransport/"}
-        // { id: "/ip4/159.69.119.82/udp/4001/quic-v1/webtransport/certhash/uEiAP75UYHU9lxxeQ43_u3U7PrL3eeb0aOBfw2ty7CjuSUA/certhash/uEiBhciKTRyUiuDHnFkpOD_i3bMRCuGT8olXrdFvteNV-uA/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct"},
-        // { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiBhciKTRyUiuDHnFkpOD_i3bMRCuGT8olXrdFvteNV-uA/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4005/quic-v1/webtransport/"},
-        // // { id: "/ip4/159.69.119.82/udp/4004/webrtc-direct/certhash/uEiA-NREGwkQ1xVlO6YkoH30R9aH-4dcQfTz-x0jJPhHRjg/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4004/webrtc-direct" },
-        // { id: "/ip4/159.69.119.82/udp/4005/quic-v1/webtransport/certhash/uEiAP75UYHU9lxxeQ43_u3U7PrL3eeb0aOBfw2ty7CjuSUA/certhash/uEiBhciKTRyUiuDHnFkpOD_i3bMRCuGT8olXrdFvteNV-uA/p2p/12D3KooWAu6KS53pN69d6WG7QWttL14LnodUkBjZ1LG7F73k58LM", text: "/ip4/159.69.119.82/udp/4005/quic-v1/webtransport/"}
-    ]
-
-    let  multiAddress2Connect =  localStorage.getItem("multiAddres2Connect")?localStorage.getItem("multiAddres2Connect"):(isFirefox?relaysMultiAddrs[0].id:relaysMultiAddrs[1].id)
-    console.log("multiAddress2Connect",multiAddress2Connect)
+    const keysPath = './testkeys'
+    let address2Connect = 'test04' ///orbitdb/zdpuAthHKFXdUFcvvS25DcNRzhLRYSmSqhexC9x6yUFFV4S7q'
 
     const urlParams = new URLSearchParams($query);
-    multiAddress2Connect = urlParams.get('dial')?urlParams.get('dial'):multiAddress2Connect //if there's a dial param use that address for a connection!
 
     const connect2DB = async (_address2Connect) => {
-        db = await orbitdb.open(_address2Connect)
+        console.log("_address2Connect",_address2Connect)
+        console.log("address",address)
+        // if(address!==undefined && _address2Connect===address) return
+        outputLogComp?.appendOutput(`now connecting! ${_address2Connect}`)
 
-
-        db.events.on('join', async (peerId, heads) => {
-            console.log("join",peerId)
-        })
-
-// Listen for any updates to db2. This is especially useful when listening for
-// new heads that are available on db1.
-// If we want to listen for new data on db2, add an "update" listener to db1.
-        db.events.on('update', async (entry) => {
-            console.log("update",entry)
-            // Full replication is achieved by explicitly retrieving all records from db1.
-            console.log(await db.all())
-            // db2Updated = true
-        })
+        db = await orbitdb.open(_address2Connect,{sync:true, accessController})
         address = db.address
         console.log("db address now",address)
-        await countDataInDB()
+
+        const allrecords = await db.all()
+        outputLogComp?.appendOutput(`connect2DB:allrecords ${allrecords.length}`)
+        console.log("connected now ",address)
+
+        const onJoin = async (peerId, heads) => {
+            outputLogComp?.appendOutput(`connect2DB:onJoin ${peerId}`)
+        }
+
+        const onUpdate = async (peerId, heads) => {
+            outputLogComp?.appendOutput(`connect2DB:onUpdate ${peerId}`)
+        }
+
+        const onError = (err) => {
+            outputLogComp?.appendOutput(`onError ${err}`)
+        }
+        db.events.on('join', onJoin)
+        db.events.on('error', onError)
+        db.events.on('update', onUpdate)
+        for await (const record of db.iterator()) {
+            console.log("record",record)
+            outputLogComp?.appendOutput(`record: ${record.value}`)
+        }
+
     }
 
     address2Connect = urlParams.get('db') || address2Connect
-    console.log("address2Connect",address2Connect)
-    $: {
-        if(orbitdb && address2Connect) connect2DB(address2Connect)
-    }
+    if(orbitdb && address2Connect) connect2DB(address2Connect)
 
-    let transportToggleWebtransport= (multiAddress2Connect.indexOf('webtransport')!==-1) ? true : false;
-    console.log("transportToggleWebtransport",transportToggleWebtransport)
     $: {
-        //if we have dial param do not switch connection!
-        if(!urlParams.get('dial')){
-            transportToggleWebtransport === true ? multiAddress2Connect = relaysMultiAddrs[1].id :multiAddress2Connect = relaysMultiAddrs[0].id;
-            outputLogComp?.appendOutput(`Switching Transport to ${multiAddress2Connect}`)
-            console.log("multiAddress2Connect",multiAddress2Connect)
+        if(!peerConnected && urlParams.get('dial') && listeningAddressList.length>=3){
+            console.log("dialing to peer",urlParams.get('dial'))
+            const urls2Dial = JSON.parse(urlParams.get('dial'))
+            for (const ma in urls2Dial) {
+                console.log("dialing "+ma,urls2Dial[ma])
+                try{
+                    // console.log("urls2Dial[ma]",urls2Dial[ma])
+                    if(urls2Dial[ma].indexOf("/p2p-circuit/webrtc/p2p")!==-1  ){
+                        libp2p.dial(multiaddr(urls2Dial[ma])).then((info) => {
+                            peerConnected = true
+                            outputLogComp?.appendOutput(`connected peer ${info}`)
+                            console.log("connected peer",info)}).catch( (e) => { console.log("problem dialing "+urls2Dial[ma],e) })
+                   }
+                    }catch(ex){console.log("error while connecting",ex)}
+
+            }
         }
     }
-    //selectedListeningAddress appears as soon as we got our multiaddress from kubo (relay) in this case we choose the address which we connected with
-    $:{
-        console.log("looking for webtransport multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webtransport')!==-1))
-        console.log("looking for webrtc-direct multi addresses",listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct')!==-1))
-        if(transportToggleWebtransport)
-            selectedListeningAddress=listeningAddressList.find(addr=>addr.indexOf('/webtransport')!==-1)
-        else
-            selectedListeningAddress=listeningAddressList.find(addr=>addr.indexOf('/webrtc-direct')!==-1)
 
-        console.log("--->selectedListeningAddress now:",selectedListeningAddress)
-    }
-    //qrCodeData creates an url with db (dbaddress) and dial (multiaddr) param
-    $:qrCodeData = `${window.location.origin}/${window.location.hash}?db=${encodeURI(address)}&dial=${encodeURI(selectedListeningAddress)}`
+    $:qrCodeData = JSON.stringify(listeningAddressList)
 
     onMount(async () => {
-        libp2p = await createLibp2p(config)
+
+        keystore = await KeyStore({ path: keysPath })
+        identities = await Identities({ keystore })
+        testIdentity1 = await identities.createIdentity({ id: 'userA' })
+
+        libp2p = await createLibp2p(DefaultLibp2pBrowserOptions)
+        console.log("libp2p",libp2p)
         libp2p.addEventListener('connection:open', (evt) => {
             console.log("connection:open",evt)
             updatePeerList()
@@ -124,13 +126,10 @@
         libp2p.addEventListener("peer:discovery", (evt) => {
             console.log("peer:discovery",evt.detail.id.toString())
         });
-        libp2p.services.pubsub.addEventListener('subscription-change', event => console.log("subscription-change",event))
+
         libp2p.services.pubsub.addEventListener('subscription-change', event => {
-            // const topic = event.detail.topic
-            // const message = toString(event.detail.data)
             console.log("event",event)
             outputLogComp?.appendOutput(`subscription-change`)
-        
         })
 
         libp2p.services.pubsub.addEventListener('message', event => {
@@ -148,8 +147,8 @@
             console.log("self:peer:update",evt.currentTarget.peerId.toString())
             console.log(" libp2p.getMultiaddrs()", libp2p.getMultiaddrs())
             const multiaddrs = libp2p.getMultiaddrs().map((ma) => ma.toString())
-            console.log("multiaddrs",multiaddrs)
             if(multiaddrs.length>0){
+                console.log("multiaddrs",multiaddrs)
                 outputLogComp?.appendOutput(`multiaddrs found '${multiaddrs}' now connecting to db ${address2Connect}`)
                 connect2DB(address2Connect)
             }
@@ -157,55 +156,55 @@
            // selectedListeningAddress = listeningAddressList.find((addr)=>addr.indexOf(transportToggleWebtransport?'/webtransport':'/webrtc-direct'))
         })
         window.libp2p = libp2p
-
         helia = await createHelia({
             libp2p,
             blockstore,
             datastore
         });
         window.helia = helia
-        await connectKuboRelay()
-
-        orbitdb = await createOrbitDB({ ipfs: helia, id: 'user1', directory: './orbitdb' })
+        orbitdb = await createOrbitDB({ ipfs: helia,identity:testIdentity1,identities})
+        accessController = await IPFSAccessController()({
+            orbitdb: orbitdb,
+            write: ['*'],
+            identities: identities
+        })
+        console.log("orbitdb",orbitdb)
         if(!$query){
             outputLogComp?.appendOutput("query not given - doing default connect")
             connect2DB(address2Connect)
         }
-
-        // const subscribeTopic = "orbitdb/nico"
-        // const sendTopicMessage = "hallo message"
-        // appendOutput(`Subscribing to '${subscribeTopic}`)
-        // libp2p.services.pubsub.subscribe(subscribeTopic)
-        //
-        // appendOutput(`Sending message '${sendTopicMessage}'`)
-        // await libp2p.services.pubsub.publish(subscribeTopic, fromString(sendTopicMessage))
     })
 
 
     function updatePeerList () {
         const peerList = libp2p.getPeers().map(peerId => peerId.toString())
         peerConnectionsList = peerList
-        outputLogComp?.appendOutput(`gathered peerConnectionsList from ${peerConnectionsList}`)
-        console.log("updatePeerList",peerConnectionsList)
-    }
-    const connectKuboRelay = async () => {
-        relayConnected = false
-        listeningAddressList = []
-        const ma = multiaddr(multiAddress2Connect)
-        outputLogComp?.appendOutput(`Dialing '${ma}'`)
-        await libp2p.dial(ma)
-        relayConnected = true
-        outputLogComp?.appendOutput(`Connected to '${ma}'`)
-        localStorage.setItem("multiAddress2Connect",multiAddress2Connect)
+        outputLogComp?.appendOutput(`updated peerConnectionsList from ${peerConnectionsList} now: ${peerConnectionsList.length}`)
+        if(peerConnectionsList.length>0)relayConnected=true
     }
 
     const countDataInDB = async () => {
-        const db2 = await orbitdb.open(address2Connect)
-        for await (const record of db2.iterator()) {
-            console.log("read record",record)
-            count++
-            outputLogComp?.appendOutput(`counted ${count} records`)
+        outputLogComp?.appendOutput(`counting data from ${address2Connect}`)
+        const db2 = await orbitdb.open(address2Connect,{sync:true, accessController})
+
+        const onJoin = async (peerId, heads) => {
+            outputLogComp?.appendOutput(`countDataInDB:onJoin ${peerId}`)
+            for await (const record of db2.iterator()) {
+                console.log("read record",record)
+                outputLogComp?.appendOutput(`counted ${count} records`)
+            }
         }
+
+        const onUpdate = async (peerId, heads) => {
+            outputLogComp?.appendOutput(`countDataInDB:onUpdate ${peerId}`)
+        }
+
+        const onError = (err) => {
+            outputLogComp?.appendOutput(`countDataInDB:onError ${err}`)
+        }
+        db2.events.on('join', onJoin)
+        db2.events.on('error', onError)
+        db2.events.on('update', onUpdate)
     }
 </script>
 
@@ -219,8 +218,8 @@
     <Row>
         <Column class="distance">OrbitDB address:</Column>
         <Column class="distance">
-            <QRCodeModal bind:qrCodeOpen={qrCodeOpen} on:close={qrCodeOpen=false} qrCodeData={qrCodeData} />
-            <Button disabled={!address || !multiAddress2Connect} on:click={() => { qrCodeOpen=(!qrCodeOpen) }} size="small">Open / Scan</Button>
+            <QRCodeModal bind:qrCodeOpen={qrCodeOpen} on:close={qrCodeOpen=false} qrCodeData={qrCodeData} address={address}/>
+            <Button disabled={!address || listeningAddressList.length===0} on:click={() => { qrCodeOpen=(!qrCodeOpen) }} size="small">Open / Scan</Button>
         </Column>
         <Column class="distance">{address}</Column>
     </Row>
@@ -229,29 +228,23 @@
         <Column class="distance">{db?.name}</Column>
     </Row>
     <Row>
-        <Column class="distance">Relay connected:</Column>
-        <Column>
-            <Toggle labelText={transportToggleWebtransport?'Connect to Relay via WebTransport':'Connect to Relay via WebRTC-Direct'}
-                    toggled={transportToggleWebtransport} on:change={() => {
-                        transportToggleWebtransport=(!transportToggleWebtransport)
-                        connectKuboRelay()
-                    }} />
-        </Column>
+        <Column class="distance">Relays connected:</Column>
         <Column class="distance">
             {#if relayConnected}
-                { relaysMultiAddrs.find(it => it.id===multiAddress2Connect)?.text} <WatsonHealthAiStatusComplete  class="statusGreen"/>
+                { peerConnectionsList.length } <WatsonHealthAiStatusComplete  class="statusGreen"/>
             {:else}
-                <WatsonHealthAiStatus class="statusRead" />
+               0 <WatsonHealthAiStatus class="statusRead" />
             {/if}
         </Column>
+        <Column>&nbsp;</Column>
     </Row>
     <Row>
         <Column class="distance">Multi Addresses Received:</Column>
         <Column class="distance">
             {#if listeningAddressList.length>0}
-                {listeningAddressList.length}<WatsonHealthAiStatusComplete  class="statusGreen"/>
+                {listeningAddressList.length} <WatsonHealthAiStatusComplete  class="statusGreen"/>
             {:else}
-                {listeningAddressList.length}<WatsonHealthAiStatus class="statusRead" />
+                {listeningAddressList.length} <WatsonHealthAiStatus class="statusRead" />
             {/if}
         </Column>
         <Column>
@@ -263,12 +256,18 @@
     <Row>
         <Column class="distance">
             <Button size="small" on:click={async () => {
-                const amount = count + 10
-                for (let i = count; i < amount; i++) {
-                    await db.add('hello' + i)
-                    count++
-                    outputLogComp?.appendOutput(`added ${i} record`)
-                }
+                /*const db2 = await orbitdb.open(address2Connect,{sync:true, accessController})-->
+
+                <!--const amount = count + 10-->
+                <!--outputLogComp?.appendOutput(`adding count:${count} amount:${amount}`)--> */
+               // for (let i = count; i < amount; i++) {
+                 const records = await db.all()
+
+                outputLogComp?.appendOutput(`adding count:${records.length} address:${db.address}`)
+                await db.add('hello' + count++)
+              //  outputLogComp?.appendOutput(`bla ${records}`)
+                  //  outputLogComp?.appendOutput(`added ${i} record`)
+                //}
             }}>Write 10 records to OrbitDB</Button>
         </Column>
         <Column class="distance">
@@ -282,11 +281,6 @@
         <Column><OutputLog bind:this={outputLogComp}  labelText="Output" rows={10} /></Column>
     </Row>
 </Grid>
-
-
-<div class='snow'>
-<!--<Snow/>-->
-</div>
 
 <style>
     :global(.distance){

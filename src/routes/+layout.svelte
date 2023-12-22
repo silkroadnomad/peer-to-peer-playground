@@ -16,23 +16,21 @@
     import { hash } from './router.js'
     import Home from './+page.svelte'
 
-    import LibP2PPubSubExample from './libp2p/+page.svelte'
-    import HeliaCounter from './helia/counter/+page.svelte'
-    import HeliaCounter2 from './helia/counter2/+page.svelte'
-    import ConnectedCounter from './helia/counter3/+page.svelte'
     import OrbitParticles from './orbitdb/basic/+page.svelte'
     import {goto} from "$app/navigation";
+    import OrbitDBCounterWorking from "$lib/components/OrbitDBCounterWorking.svelte";
 
     let isSideNavOpen = false;
     let isOpen = false;
     let theme = "g90";
     const routes = {
         '': Home,
-        '/libp2p/pubsub': LibP2PPubSubExample,
-        '/helia/counter': HeliaCounter,
-        '/helia/counter2': HeliaCounter2,
-        '/helia/counter3': ConnectedCounter,
-        '/orbitdb/basic': OrbitParticles
+        // '/libp2p/pubsub': LibP2PPubSubExample,
+        // '/helia/counter': HeliaCounter,
+        // '/helia/counter2': HeliaCounter2,
+        // '/helia/counter3': ConnectedCounter,
+        '/orbitdb/basic': OrbitParticles,
+        '/orbitdb/counter': OrbitDBCounterWorking
     }
     $: view = routes[$hash]
 </script>
@@ -56,6 +54,7 @@
 <!--                <HeaderPanelLink  href={ `helia/remotePinning'` } >helia remote pinning</HeaderPanelLink>-->
                 <HeaderPanelDivider>OrbitDB</HeaderPanelDivider>
                 <HeaderPanelLink  href={ `#/orbitdb/basic` }>orbit-db basic</HeaderPanelLink>
+                <HeaderPanelLink  href={ `#/orbitdb/counter` }>orbit-db counter</HeaderPanelLink>
 <!--                <HeaderPanelLink  href={ `#/orbitdb/replication` }>orbit-db replication</HeaderPanelLink>-->
             </HeaderPanelLinks>
         </HeaderAction>

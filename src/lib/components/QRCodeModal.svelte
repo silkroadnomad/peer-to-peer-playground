@@ -18,6 +18,12 @@
     export let qrCodeData
 
     /**
+     * an optional db address when working with orbitdb
+     * @type {string}
+     */
+    export let address
+
+    /**
      * Generates a QR-Code with the given data
      * @param {string}data
      * @return {string} the
@@ -37,8 +43,9 @@
     function copyError(event){
         text = `Error! ${event.detail}`
     }
-    $: console.log("qrCode open",qrCodeOpen)
-    $: console.log("qrCodeData", qrCodeData)
+    let url
+    $: url =  `${window.location.origin}/${window.location.hash}?&db=${encodeURI(address)}&dial=${encodeURI(qrCodeData)}`
+    $: console.log("url",url)
 </script>
 <svelte:window on:copysuccess={copySuccess} on:copyerror={copyError}/>
 <Modal bind:open={qrCodeOpen}
@@ -50,7 +57,7 @@
        on:close={()=>dispatch('close')}>
 
     <label for="qrCodeModal"
-            use:clickToCopy>{qrCodeData}</label>&nbsp;<span id="qrCodeModal">{text}</span>
+            use:clickToCopy>{url}</label>&nbsp;<span id="qrCodeModal">{text}</span>
     <p></p>
     {#if qrCodeData && qrCodeOpen}{@html generateQRCode(qrCodeData)}{/if}
 </Modal>
