@@ -29,12 +29,15 @@
 		"prettier-plugin-svelte": "^2.10.1",
 		"svelte": "^4.0.5",
 		"svelte-check": "^3.4.3",
+		"sveltejs-adapter-ipfs": "^0.4.12",
 		"typescript": "^5.2.2",
 		"vite": "^4.4.2",
 		"vitest": "^0.32.2"
 	},
 	"type": "module",
 	"dependencies": {
+		"@libp2p/autonat": "^1.0.5",
+		"@libp2p/pubsub-peer-discovery": "^10.0.2",
 		"@orbitdb/core": "github:orbitdb/orbitdb#helia",
 		"blockstore-level": "^1.1.6",
 		"carbon-icons-svelte": "^12.4.0",

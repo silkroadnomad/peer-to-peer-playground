@@ -42,18 +42,17 @@
     let outputLogComp
     let qrCodeOpen;
     let qrCodeData;
-    const keysPath = './testkeys'
-    let address2Connect = 'test04' ///orbitdb/zdpuAthHKFXdUFcvvS25DcNRzhLRYSmSqhexC9x6yUFFV4S7q'
 
+    const keysPath = './testkeys'
+    let address2Connect = '/orbitdb/zdpuAw22wVq3SoUNGoCyjnv2EQuHDDK8V5Fjn6ZNb2xNUB79m' //'test20231222-1907' //test20231222-1652' //test20231222-1632' ///orbitdb/zdpuAthHKFXdUFcvvS25DcNRzhLRYSmSqhexC9x6yUFFV4S7q'
+    // let address2Connect = 'test20231222-1926'
     const urlParams = new URLSearchParams($query);
 
     const connect2DB = async (_address2Connect) => {
-        console.log("_address2Connect",_address2Connect)
-        console.log("address",address)
         // if(address!==undefined && _address2Connect===address) return
         outputLogComp?.appendOutput(`now connecting! ${_address2Connect}`)
 
-        db = await orbitdb.open(_address2Connect,{sync:true, accessController})
+        db = await orbitdb.open(_address2Connect,{ sync:true, AccessController: accessController})
         address = db.address
         console.log("db address now",address)
 
@@ -86,19 +85,19 @@
     if(orbitdb && address2Connect) connect2DB(address2Connect)
 
     $: {
-        if(!peerConnected && urlParams.get('dial') && listeningAddressList.length>=3){
+        if(!peerConnected && urlParams.get('dial') && listeningAddressList.length>=0){
             console.log("dialing to peer",urlParams.get('dial'))
             const urls2Dial = JSON.parse(urlParams.get('dial'))
             for (const ma in urls2Dial) {
                 console.log("dialing "+ma,urls2Dial[ma])
                 try{
                     // console.log("urls2Dial[ma]",urls2Dial[ma])
-                    if(urls2Dial[ma].indexOf("/p2p-circuit/webrtc/p2p")!==-1  ){
+                    // if(urls2Dial[ma].indexOf("/p2p-circuit/webrtc/p2p")!==-1  ){
                         libp2p.dial(multiaddr(urls2Dial[ma])).then((info) => {
                             peerConnected = true
                             outputLogComp?.appendOutput(`connected peer ${info}`)
                             console.log("connected peer",info)}).catch( (e) => { console.log("problem dialing "+urls2Dial[ma],e) })
-                   }
+                   // }
                     }catch(ex){console.log("error while connecting",ex)}
 
             }
@@ -163,11 +162,15 @@
         });
         window.helia = helia
         orbitdb = await createOrbitDB({ ipfs: helia,identity:testIdentity1,identities})
-        accessController = await IPFSAccessController()({
+        // accessController = await IPFSAccessController({ write: ['*'] })({
+        //     orbitdb: orbitdb,
+        //     identities: identities
+        // })
+        accessController = await IPFSAccessController({ write: ['*'] })({
             orbitdb: orbitdb,
-            write: ['*'],
             identities: identities
         })
+        // accessController = { AccessController: IPFSAccessController({ write: ['*'] }) }
         console.log("orbitdb",orbitdb)
         if(!$query){
             outputLogComp?.appendOutput("query not given - doing default connect")
@@ -179,33 +182,10 @@
     function updatePeerList () {
         const peerList = libp2p.getPeers().map(peerId => peerId.toString())
         peerConnectionsList = peerList
-        outputLogComp?.appendOutput(`updated peerConnectionsList from ${peerConnectionsList} now: ${peerConnectionsList.length}`)
+      //  outputLogComp?.appendOutput(`updated peerConnectionsList from ${peerConnectionsList} now: ${peerConnectionsList.length}`)
         if(peerConnectionsList.length>0)relayConnected=true
     }
 
-    const countDataInDB = async () => {
-        outputLogComp?.appendOutput(`counting data from ${address2Connect}`)
-        const db2 = await orbitdb.open(address2Connect,{sync:true, accessController})
-
-        const onJoin = async (peerId, heads) => {
-            outputLogComp?.appendOutput(`countDataInDB:onJoin ${peerId}`)
-            for await (const record of db2.iterator()) {
-                console.log("read record",record)
-                outputLogComp?.appendOutput(`counted ${count} records`)
-            }
-        }
-
-        const onUpdate = async (peerId, heads) => {
-            outputLogComp?.appendOutput(`countDataInDB:onUpdate ${peerId}`)
-        }
-
-        const onError = (err) => {
-            outputLogComp?.appendOutput(`countDataInDB:onError ${err}`)
-        }
-        db2.events.on('join', onJoin)
-        db2.events.on('error', onError)
-        db2.events.on('update', onUpdate)
-    }
 </script>
 
 <h1>Simple OrbitDB Test</h1>
@@ -256,15 +236,19 @@
     <Row>
         <Column class="distance">
             <Button size="small" on:click={async () => {
+
+                //const db2 = await orbitdb.open(db.address,{sync:true, AccessController: IPFSAccessController({ write: ['*'] })})
+                //const db2 = await orbitdb.open(address2Connect,{sync:true, accessController})
                 /*const db2 = await orbitdb.open(address2Connect,{sync:true, accessController})-->
 
                 <!--const amount = count + 10-->
                 <!--outputLogComp?.appendOutput(`adding count:${count} amount:${amount}`)--> */
                // for (let i = count; i < amount; i++) {
-                 const records = await db.all()
+                    const records = await db.all()
+                    outputLogComp?.appendOutput(`adding count:${records.length} address:${db.address}`)
 
-                outputLogComp?.appendOutput(`adding count:${records.length} address:${db.address}`)
-                await db.add('hello' + count++)
+                    await db.add('hello' + count++)
+                    outputLogComp?.appendOutput(`added`)
               //  outputLogComp?.appendOutput(`bla ${records}`)
                   //  outputLogComp?.appendOutput(`added ${i} record`)
                 //}
