@@ -1,11 +1,11 @@
 <script>
     import {Button, Column, Grid, Row} from "carbon-components-svelte";
-    import {onMount} from "svelte";
+    import { onMount } from "svelte";
     import WatsonHealthAiStatus from "carbon-icons-svelte/lib/WatsonHealthAiStatus.svelte";
     import WatsonHealthAiStatusComplete from "carbon-icons-svelte/lib/WatsonHealthAiStatusComplete.svelte";
     import { multiaddr } from '@multiformats/multiaddr'
     import { createHelia } from 'helia';
-    import {createOrbitDB, KeyStore, Identities, IPFSAccessController} from '@orbitdb/core';
+    import { createOrbitDB, KeyStore, Identities,useAccessController } from '@orbitdb/core';
     import { createLibp2p } from "libp2p";
     import { LevelBlockstore } from 'blockstore-level'
     import { LevelDatastore } from 'datastore-level'
@@ -15,7 +15,9 @@
     import OutputLog from "$lib/components/OutputLog.svelte";
     import QRCodeModal from "$lib/components/QRCodeModal.svelte";
     import { query } from "../../router.js";
-    import {DefaultLibp2pBrowserOptions} from "./config.js";
+    import { DefaultLibp2pBrowserOptions } from "./config.js";
+    import AddressBookAccessController from "./AddressBookAccessController.js";
+
 
     /** @type {import("libp2p").Libp2p} */
     let libp2p;
@@ -44,15 +46,23 @@
     let qrCodeData;
 
     const keysPath = './testkeys'
-    let address2Connect = '/orbitdb/zdpuAw22wVq3SoUNGoCyjnv2EQuHDDK8V5Fjn6ZNb2xNUB79m' //'test20231222-1907' //test20231222-1652' //test20231222-1632' ///orbitdb/zdpuAthHKFXdUFcvvS25DcNRzhLRYSmSqhexC9x6yUFFV4S7q'
+    let address2Connect = 'test20240102-2000' //test20231222-1652' //test20231222-1632' ///orbitdb/zdpuAthHKFXdUFcvvS25DcNRzhLRYSmSqhexC9x6yUFFV4S7q'
     // let address2Connect = 'test20231222-1926'
     const urlParams = new URLSearchParams($query);
+
+
+    useAccessController(AddressBookAccessController)
 
     const connect2DB = async (_address2Connect) => {
         // if(address!==undefined && _address2Connect===address) return
         outputLogComp?.appendOutput(`now connecting! ${_address2Connect}`)
 
-        db = await orbitdb.open(_address2Connect,{ sync:true, AccessController: accessController})
+        db = await orbitdb.open(_address2Connect, {
+            identities:identities,
+            identity: testIdentity1,
+            AccessController: AddressBookAccessController( { write: ['*']})
+        })
+
         address = db.address
         console.log("db address now",address)
 
@@ -64,8 +74,10 @@
             outputLogComp?.appendOutput(`connect2DB:onJoin ${peerId}`)
         }
 
-        const onUpdate = async (peerId, heads) => {
-            outputLogComp?.appendOutput(`connect2DB:onUpdate ${peerId}`)
+        const onUpdate = async (entry) => {
+            console.log("onUpdate->entry",entry)
+
+            outputLogComp?.appendOutput(`connect2DB:onUpdate ${entry.payload.value}`)
         }
 
         const onError = (err) => {
@@ -78,7 +90,6 @@
             console.log("record",record)
             outputLogComp?.appendOutput(`record: ${record.value}`)
         }
-
     }
 
     address2Connect = urlParams.get('db') || address2Connect
@@ -109,17 +120,18 @@
     onMount(async () => {
 
         keystore = await KeyStore({ path: keysPath })
-        identities = await Identities({ keystore })
-        testIdentity1 = await identities.createIdentity({ id: 'userA' })
+
 
         libp2p = await createLibp2p(DefaultLibp2pBrowserOptions)
         console.log("libp2p",libp2p)
+        identities = await Identities({ keystore })
+        testIdentity1 = await identities.createIdentity({ id: 'userA' })
         libp2p.addEventListener('connection:open', (evt) => {
-            console.log("connection:open",evt)
+            // console.log("connection:open",evt)
             updatePeerList()
         })
         libp2p.addEventListener('connection:close', (evt) => {
-            console.log("connection:close",evt)
+            // console.log("connection:close",evt)
             updatePeerList()
         })
         libp2p.addEventListener("peer:discovery", (evt) => {
@@ -128,7 +140,7 @@
 
         libp2p.services.pubsub.addEventListener('subscription-change', event => {
             console.log("event",event)
-            outputLogComp?.appendOutput(`subscription-change`)
+            //outputLogComp?.appendOutput(`subscription-change`)
         })
 
         libp2p.services.pubsub.addEventListener('message', event => {
@@ -138,7 +150,7 @@
             // if(!filterOutput)
             //     appendOutput(`Message received on topic '${topic}': ${message}`)
             // else if (topic!=='_peer-discovery._p2p._pubsub')
-            console.log(`Message received on topic '${topic}': ${message}`)
+            //console.log(`Message received on topic '${topic}': ${message}`)
             outputLogComp?.appendOutput(`Message received on topic '${topic}': ${message}`)
         })
 
@@ -147,7 +159,7 @@
             console.log(" libp2p.getMultiaddrs()", libp2p.getMultiaddrs())
             const multiaddrs = libp2p.getMultiaddrs().map((ma) => ma.toString())
             if(multiaddrs.length>0){
-                console.log("multiaddrs",multiaddrs)
+                //console.log("multiaddrs",multiaddrs)
                 outputLogComp?.appendOutput(`multiaddrs found '${multiaddrs}' now connecting to db ${address2Connect}`)
                 connect2DB(address2Connect)
             }
@@ -161,15 +173,20 @@
             datastore
         });
         window.helia = helia
-        orbitdb = await createOrbitDB({ ipfs: helia,identity:testIdentity1,identities})
+        orbitdb = await createOrbitDB({
+            ipfs: helia,
+            identities,
+            id: 'abc'
+        })
+        outputLogComp?.appendOutput("orbitdb defined")
         // accessController = await IPFSAccessController({ write: ['*'] })({
         //     orbitdb: orbitdb,
         //     identities: identities
         // })
-        accessController = await IPFSAccessController({ write: ['*'] })({
-            orbitdb: orbitdb,
-            identities: identities
-        })
+        // accessController = await IPFSAccessController({ write: ['*'] })({
+        //     orbitdb: orbitdb,
+        //     identities: identities
+        // })
         // accessController = { AccessController: IPFSAccessController({ write: ['*'] }) }
         console.log("orbitdb",orbitdb)
         if(!$query){
@@ -248,7 +265,7 @@
                     outputLogComp?.appendOutput(`adding count:${records.length} address:${db.address}`)
 
                     await db.add('hello' + count++)
-                    outputLogComp?.appendOutput(`added`)
+                    outputLogComp?.appendOutput(`added`,count)
               //  outputLogComp?.appendOutput(`bla ${records}`)
                   //  outputLogComp?.appendOutput(`added ${i} record`)
                 //}

@@ -22,7 +22,7 @@ const server = await createLibp2p({
     addresses: {
         listen: [
             '/ip4/127.0.0.1/tcp/12313/ws',
-            '/ip4/0.0.0.0/udp/56093/webrtc/certhash/uEiByaEfNSLBexWBNFZy_QB1vAKEj7JAXDizRs4_SnTflsQ',
+            //'/ip4/0.0.0.0/udp/56093/webrtc/certhash/uEiByaEfNSLBexWBNFZy_QB1vAKEj7JAXDizRs4_SnTflsQ',
             "/ws","/wss","/webrtc"
             // '/ip4/127.0.0.1/p2p/4001/QmRelay/p2p-circuit',
         //    '/ip4/127.0.0.1/udp/4004/webrtc-direct'
