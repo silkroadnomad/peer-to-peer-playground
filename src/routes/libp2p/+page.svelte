@@ -38,7 +38,7 @@ let outputLogComp
 let qrCodeData
 let dialUrl
 
-$:qrCodeData = `${window.location.origin}/${window.location.hash}?dial=${encodeURI(selectedListeningAddress)}`
+$:qrCodeData = `${window.location.origin}/${window.location.pathname}/${window.location.hash}?dial=${encodeURI(selectedListeningAddress)}`
 $: {
     if($query!==undefined && $query.split("=")[0]==='dial') {
         const textpart = $query.split("certhash")[0].substring(5) //cut away dial=
